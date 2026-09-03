@@ -227,23 +227,24 @@ class _RaceBeginsMiniGameState extends State<RaceBeginsMiniGame>
                             ),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Stack(
-                                alignment: Alignment.centerLeft,
-                                children: [
-                                  Container(
-                                    height: 10,
-                                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.shade50,
-                                      borderRadius: BorderRadius.circular(5),
-                                      border: Border.all(color: Colors.green.shade200),
-                                    ),
-                                  ),
-                                  LayoutBuilder(
-                                    builder: (context, laneConstraints) {
-                                      final progress = (_score / widget.step.targetScore).clamp(0.0, 1.0);
-                                      return Positioned(
-                                        left: 8 + (progress * (laneConstraints.maxWidth - 36)),
+                              child: LayoutBuilder(
+                                builder: (context, laneConstraints) {
+                                  final progress = (_score / widget.step.targetScore).clamp(0.0, 1.0);
+                                  final maxOffset = (laneConstraints.maxWidth - 36).clamp(0.0, double.infinity);
+                                  return Stack(
+                                    alignment: Alignment.centerLeft,
+                                    children: [
+                                      Container(
+                                        height: 10,
+                                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.shade50,
+                                          borderRadius: BorderRadius.circular(5),
+                                          border: Border.all(color: Colors.green.shade200),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        left: 8 + (progress * maxOffset),
                                         child: Container(
                                           width: 18,
                                           height: 18,
@@ -261,10 +262,10 @@ class _RaceBeginsMiniGameState extends State<RaceBeginsMiniGame>
                                             child: Icon(Icons.star, size: 12, color: Colors.white),
                                           ),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ],
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
                             const Text('🏁', style: TextStyle(fontSize: 22)),

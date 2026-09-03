@@ -75,6 +75,11 @@ class AppTheme {
     colors: [peacockTeal, peacockBlue],
   );
 
+  static const List<String> fontFallbacks = [
+    'NotoSansDevanagari',
+    'NotoSerifDevanagari',
+  ];
+
   static ThemeData get royalTheme {
     return ThemeData(
       useMaterial3: true,
@@ -86,6 +91,10 @@ class AppTheme {
         surface: parchmentLight,
       ),
       fontFamily: 'serif',
+      fontFamilyFallback: fontFallbacks,
+      textTheme: const TextTheme().apply(
+        fontFamilyFallback: fontFallbacks,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -96,6 +105,7 @@ class AppTheme {
           fontSize: 22,
           fontWeight: FontWeight.bold,
           fontFamily: 'serif',
+          fontFamilyFallback: fontFallbacks,
         ),
       ),
     );

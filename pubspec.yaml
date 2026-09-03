@@ -42,3 +42,11 @@ flutter:
     - assets/spritesheets/tortoise/win/
     - assets/spritesheets/badges/
     - assets/audio/
+
+  fonts:
+    - family: NotoSansDevanagari
+      fonts:
+        - asset: assets/fonts/NotoSansDevanagari.ttf
+    - family: NotoSerifDevanagari
+      fonts:
+        - asset: assets/fonts/NotoSerifDevanagari.ttf

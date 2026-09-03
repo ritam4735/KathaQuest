@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'audio_service/audio_service.dart';
 
 class AudioManager extends ChangeNotifier {
   static final AudioManager _instance = AudioManager._internal();
@@ -35,13 +36,17 @@ class AudioManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Play named SFX with kid-friendly haptic / sound simulation
+  // Play named SFX with real Web Audio / AudioElement playback
   void playSfx(String sfxName) {
     if (!_isSfxEnabled) return;
 
     if (kDebugMode) {
       print('🎵 [SFX] Playing sound effect: $sfxName');
     }
+
+    try {
+      AudioService.instance.playSound(sfxName);
+    } catch (_) {}
   }
 
   void playTap() => playSfx('tap_pop');

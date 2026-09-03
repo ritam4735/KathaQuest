@@ -196,29 +196,29 @@ class _FinalSprintMiniGameState extends State<FinalSprintMiniGame>
                             const Text('Lane 1', style: TextStyle(fontWeight: FontWeight.bold)),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: Colors.red.shade50,
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                  ),
-                                  LayoutBuilder(
-                                    builder: (context, trackConstraints) {
-                                      final maxOffset = trackConstraints.maxWidth - 44;
-                                      return Positioned(
+                              child: LayoutBuilder(
+                                builder: (context, trackConstraints) {
+                                  final maxOffset = (trackConstraints.maxWidth - 44).clamp(0.0, double.infinity);
+                                  return Stack(
+                                    children: [
+                                      Container(
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.shade50,
+                                          borderRadius: BorderRadius.circular(18),
+                                        ),
+                                      ),
+                                      Positioned(
                                         left: (_hareProgress * maxOffset).clamp(0.0, maxOffset),
                                         child: const AnimatedSpriteWidget(
                                           animation: 'hare_run',
                                           width: 40,
                                           height: 40,
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ],
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -233,29 +233,29 @@ class _FinalSprintMiniGameState extends State<FinalSprintMiniGame>
                             const Text('Lane 2', style: TextStyle(fontWeight: FontWeight.bold)),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.shade50,
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                  ),
-                                  LayoutBuilder(
-                                    builder: (context, trackConstraints) {
-                                      final maxOffset = trackConstraints.maxWidth - 44;
-                                      return Positioned(
+                              child: LayoutBuilder(
+                                builder: (context, trackConstraints) {
+                                  final maxOffset = (trackConstraints.maxWidth - 44).clamp(0.0, double.infinity);
+                                  return Stack(
+                                    children: [
+                                      Container(
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.shade50,
+                                          borderRadius: BorderRadius.circular(18),
+                                        ),
+                                      ),
+                                      Positioned(
                                         left: (_tortoiseProgress * maxOffset).clamp(0.0, maxOffset),
                                         child: const AnimatedSpriteWidget(
                                           animation: 'tortoise_run',
                                           width: 40,
                                           height: 40,
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ],
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
                             const SizedBox(width: 8),

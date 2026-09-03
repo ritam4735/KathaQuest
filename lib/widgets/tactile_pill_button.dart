@@ -108,6 +108,7 @@ class TactilePillButton extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: textColor,
                   fontFamily: 'serif',
+                  fontFamilyFallback: AppTheme.fontFallbacks,
                   letterSpacing: 0.5,
                 ),
               ),
