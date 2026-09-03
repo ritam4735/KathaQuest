@@ -3,6 +3,7 @@ import '../../core/models/story_model.dart';
 import '../../core/audio_manager.dart';
 import '../../core/app_theme.dart';
 import '../../widgets/animated_sprite_widget.dart';
+import '../../widgets/magical_speech_bubble.dart';
 
 class TapReactionWidget extends StatefulWidget {
   final ComicCharacterTarget target;
@@ -62,32 +63,14 @@ class _TapReactionWidgetState extends State<TapReactionWidget>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Dynamic pop-up bubble on tap
+          // Dynamic glowing pop-up bubble on tap
           AnimatedOpacity(
             opacity: _showBubble ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 250),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              margin: const EdgeInsets.only(bottom: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.primary, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Text(
-                widget.target.speechBubbleOnTap,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
-                ),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: MagicalFloatingBubble(
+                text: widget.target.speechBubbleOnTap,
               ),
             ),
           ),

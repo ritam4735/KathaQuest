@@ -5,6 +5,7 @@ import '../../core/models/story_model.dart';
 import '../../core/audio_manager.dart';
 import '../../core/app_theme.dart';
 import '../../widgets/animated_sprite_widget.dart';
+import '../../widgets/magical_speech_bubble.dart';
 import 'minigame_container.dart';
 
 class RhythmStepsMiniGame extends StatefulWidget {
@@ -29,6 +30,8 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
   int _score = 0;
   int _combo = 0;
   bool _isGameOver = false;
+  String? _rhythmFeedback;
+  Timer? _feedbackTimer;
 
   final List<_BeatNote> _notes = [];
   final Random _random = Random();
@@ -122,12 +125,19 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
       _combo++;
       final pointsAwarded = 10 + (_combo > 3 ? 5 : 0);
       _score += pointsAwarded;
+      _rhythmFeedback = _combo > 2 ? 'Combo x$_combo! 🌟' : 'Perfect! 🎵';
       AudioManager().playFootstep();
       AudioManager().playStar();
     } else {
       _combo = 0;
+      _rhythmFeedback = 'Tap on line! 🐾';
       AudioManager().playTap();
     }
+
+    _feedbackTimer?.cancel();
+    _feedbackTimer = Timer(const Duration(milliseconds: 900), () {
+      if (mounted) setState(() => _rhythmFeedback = null);
+    });
 
     setState(() {});
 
@@ -222,35 +232,26 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
                 ),
               ),
 
-              // Snoring Hare animated sprite in background
+              // Snoring Hare animated sprite in background with Glowing Dream Bubble
               Positioned(
-                top: 16,
-                right: 20,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.92),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.saffron.withOpacity(0.4), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: const [
-                      AnimatedSpriteWidget(
-                        animation: 'hare_sleep',
-                        width: 50,
-                        height: 50,
-                      ),
-                      SizedBox(width: 6),
-                      Text('Zzz... 😴', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    ],
-                  ),
+                top: 14,
+                right: 16,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    AnimatedSpriteWidget(
+                      animation: 'hare_sleep',
+                      width: 52,
+                      height: 52,
+                    ),
+                    SizedBox(width: 6),
+                    MagicalFloatingBubble(
+                      text: 'Zzz... 😴',
+                      icon: '🌙',
+                      glowColor: Color(0xFF80D8FF),
+                      fontSize: 12,
+                    ),
+                  ],
                 ),
               ),
 
@@ -273,6 +274,21 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
                   Expanded(child: Container()),
                 ],
               ),
+
+              // Dynamic Rhythm Hit Feedback Bubble
+              if (_rhythmFeedback != null)
+                Positioned(
+                  top: constraints.maxHeight * 0.72,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: MagicalFloatingBubble(
+                      text: _rhythmFeedback!,
+                      glowColor: const Color(0xFFFFD54F),
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
 
               // Glowing Hit Target Line
               Positioned(

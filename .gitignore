@@ -37,3 +37,13 @@ symbols/
 
 # Output of the package metadata tool
 .packages
+
+
+Library/
+Temp/
+Obj/
+Logs/
+UserSettings/
+Builds/
+*.apk
+*.aab

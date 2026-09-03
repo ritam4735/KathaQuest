@@ -4,6 +4,7 @@ import '../../core/models/story_model.dart';
 import '../../core/audio_manager.dart';
 import '../../core/app_theme.dart';
 import '../../widgets/animated_sprite_widget.dart';
+import '../../widgets/magical_speech_bubble.dart';
 import 'minigame_container.dart';
 
 class FinalSprintMiniGame extends StatefulWidget {
@@ -266,12 +267,25 @@ class _FinalSprintMiniGameState extends State<FinalSprintMiniGame>
                     ),
                   ),
 
-              // Giant Tactile Cheer Button
-              GestureDetector(
+                  const SizedBox(height: 12),
+
+                  // Glowing Magical Cheer Bubble
+                  MagicalFloatingBubble(
+                    text: _tortoiseProgress > 0.85
+                        ? 'Finish line in sight! 🏆'
+                        : (_tortoiseProgress > 0.4
+                            ? 'Keep cheering! Timo leads! 🌟'
+                            : 'Cheer Timo to run faster! 🏁'),
+                    glowColor: const Color(0xFFFF9F1C),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Giant Tactile Cheer Button
+                  GestureDetector(
                 onTap: _handleCheerTap,
                 child: Container(
                   width: 240,
-                  height: 100,
+                  height: 108,
                   decoration: AppTheme.tactileButtonDecoration(
                     topColor: const Color(0xFFFF9F1C),
                     bottomColor: const Color(0xFFE76F51),

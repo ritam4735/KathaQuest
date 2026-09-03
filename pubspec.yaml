@@ -25,6 +25,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/hero_splash/
     - assets/images/backgrounds_for_hare_tortoise_story/
     - assets/spritesheets/
     - assets/spritesheets/hare/idle/

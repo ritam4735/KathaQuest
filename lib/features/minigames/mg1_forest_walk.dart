@@ -5,6 +5,7 @@ import '../../core/models/story_model.dart';
 import '../../core/audio_manager.dart';
 import '../../core/app_theme.dart';
 import '../../widgets/animated_sprite_widget.dart';
+import '../../widgets/magical_speech_bubble.dart';
 import 'minigame_container.dart';
 
 class ForestWalkMiniGame extends StatefulWidget {
@@ -32,6 +33,8 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
   final List<_ForestItem> _items = [];
   final Random _random = Random();
   bool _isGameOver = false;
+  String? _timoReaction;
+  Timer? _reactionTimer;
 
   @override
   void initState() {
@@ -126,9 +129,16 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
 
     if (item.points > 0) {
       AudioManager().playStar();
+      _timoReaction = '+${item.points} ${item.emoji}';
     } else {
       AudioManager().playWrong();
+      _timoReaction = 'Careful! 🍃';
     }
+
+    _reactionTimer?.cancel();
+    _reactionTimer = Timer(const Duration(milliseconds: 1200), () {
+      if (mounted) setState(() => _timoReaction = null);
+    });
 
     if (_score >= widget.step.targetScore) {
       _finishGame();
@@ -302,23 +312,19 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
                             ),
                           ),
                         ),
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.92),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                          child: const Text(
-                            '👈 Drag Timo 👉',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                          ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: _timoReaction != null
+                              ? MagicalFloatingBubble(
+                                  text: _timoReaction!,
+                                  fontSize: 12,
+                                  glowColor: const Color(0xFFFFD54F),
+                                )
+                              : const MagicalFloatingBubble(
+                                  text: 'Drag Timo',
+                                  icon: '👈',
+                                  fontSize: 11,
+                                ),
                         ),
                       ],
                     ),

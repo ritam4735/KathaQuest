@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
+import '../../widgets/magical_speech_bubble.dart';
 
 class MiniGameContainer extends StatelessWidget {
   final String title;
@@ -135,29 +136,8 @@ class MiniGameContainer extends StatelessWidget {
               ),
             ),
 
-            // Instructions Hint Bar
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              color: const Color(0xFFFFF3CD),
-              child: Row(
-                children: [
-                  const Text('💡 ', style: TextStyle(fontSize: 14)),
-                  Expanded(
-                    child: Text(
-                      instructions,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF856404),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Instructions Hint Bar with Magical Glowing Style
+            MagicalHintBanner(instructions: instructions),
 
             // Game Play Area
             Expanded(child: child),

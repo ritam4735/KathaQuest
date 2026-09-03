@@ -5,6 +5,7 @@ import '../../core/audio_manager.dart';
 import '../../core/app_theme.dart';
 import '../../widgets/steady_meter.dart';
 import '../../widgets/animated_sprite_widget.dart';
+import '../../widgets/magical_speech_bubble.dart';
 import 'minigame_container.dart';
 
 class RaceBeginsMiniGame extends StatefulWidget {
@@ -274,6 +275,18 @@ class _RaceBeginsMiniGameState extends State<RaceBeginsMiniGame>
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 12),
+
+                  // Glowing Magical Prompt Bubble
+                  MagicalFloatingBubble(
+                    text: isInSteadyZone ? 'Pacing is perfect!' : 'Tap to stay in green!',
+                    icon: isInSteadyZone ? '🐢' : '✨',
+                    glowColor: isInSteadyZone
+                        ? const Color(0xFF2EC4B6)
+                        : const Color(0xFFFF9F1C),
+                  ),
+                  const SizedBox(height: 8),
 
                   // Steady Meter
                   SteadyMeter(

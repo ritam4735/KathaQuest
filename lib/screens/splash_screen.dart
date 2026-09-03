@@ -1,241 +1,352 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/audio_manager.dart';
+import '../state/game_state.dart';
 import 'main_shell_screen.dart';
-import 'splash/painters/living_world_painter.dart';
-import 'splash/painters/constellation_painter.dart';
-import 'splash/painters/golden_particle_system.dart';
-import 'splash/widgets/book_light_beam_widget.dart';
-import 'splash/widgets/closed_book_widget.dart';
-import 'splash/widgets/magical_sky_veil_widget.dart';
-import 'splash/widgets/celestial_character_widget.dart';
-import 'splash/widgets/splash_title_overlay.dart';
+import 'splash/layers/hero_background_layer.dart';
+import 'splash/layers/cloud_layer.dart';
+import 'splash/layers/particle_layer.dart';
+import 'splash/layers/butterfly_layer.dart';
+import 'splash/layers/bird_layer.dart';
+import 'splash/layers/light_glow_layer.dart';
+import 'splash/layers/character_stage_layer.dart';
+import 'splash/ui/tap_to_begin_overlay.dart';
 
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+/// Backward-compatible alias for existing main.dart entry
+typedef SplashScreen = HeroSplashScreen;
+
+/// Premium Interactive Hero Splash Animation Screen.
+/// Plays multi-stage cinematic animation using separated transparent PNG hero assets,
+/// runs background initialization with a glowing progress bar, transitions to an
+/// interactive "Tap to Begin" prompt, and continues subtle atmospheric idle loops
+/// until the user taps.
+class HeroSplashScreen extends StatefulWidget {
+  const HeroSplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  State<HeroSplashScreen> createState() => _HeroSplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _HeroSplashScreenState extends State<HeroSplashScreen>
     with TickerProviderStateMixin {
-  late AnimationController _masterController;
-  late AnimationController _loopController;
+  // 1. Stage 1 to 3 Master Intro Controller (7.0 seconds total)
+  late AnimationController _introController;
 
-  bool _hasTriggeredChime = false;
-  bool _hasTriggeredFanfare = false;
+  // 2. Stage 4 Continuous Atmospheric Idle Loop Controller (4.0 seconds repeating)
+  late AnimationController _idleLoopController;
+
+  // 3. User Tap Feedback & Transition Controller (550ms)
+  late AnimationController _tapTransitionController;
+
+  // Loading state & progress tracking
+  double _loadingProgress = 0.0;
+  bool _isLoaded = false;
   bool _hasTransitioned = false;
+
+  // Sound sync flags
+  bool _hasTriggeredBookChime = false;
+  bool _hasTriggeredCharacterFanfare = false;
 
   @override
   void initState() {
     super.initState();
 
-    // 1. Master Timeline Controller (9.5 seconds)
-    _masterController = AnimationController(
+    // 1. Master Intro Timeline
+    _introController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 9500),
+      duration: const Duration(milliseconds: 7000),
     );
 
-    // 2. Continuous Loop Controller for idle breathing, fireflies, and hovering
-    _loopController = AnimationController(
+    // 2. Stage 4 Idle Loop Controller
+    _idleLoopController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 4000),
     )..repeat();
 
-    // Track milestones for audio synchronization
-    _masterController.addListener(_onTimelineUpdate);
-    _masterController.addStatusListener(_onTimelineStatus);
+    // 3. Tap Feedback Controller
+    _tapTransitionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 550),
+    );
 
-    // Start cinematic sequence
-    _masterController.forward();
+    _introController.addListener(_onIntroUpdate);
+
+    // Start cinematic intro sequence
+    _introController.forward();
+
+    // Start background asset pre-caching and state initialization
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startBackgroundInitialization();
+    });
   }
 
-  void _onTimelineUpdate() {
-    final t = _masterController.value;
+  void _onIntroUpdate() {
+    final t = _introController.value;
 
-    // Trigger book awakening chime at ~2.2s (t ≈ 0.23)
-    if (t >= 0.23 && !_hasTriggeredChime) {
-      _hasTriggeredChime = true;
+    // Trigger book awakening audio chime around 2.2s (t ≈ 0.31)
+    if (t >= 0.31 && !_hasTriggeredBookChime) {
+      _hasTriggeredBookChime = true;
       AudioManager().playStar();
     }
 
-    // Trigger magical fanfare as Flying Lion and characters align at ~6.5s (t ≈ 0.68)
-    if (t >= 0.68 && !_hasTriggeredFanfare) {
-      _hasTriggeredFanfare = true;
+    // Trigger magical fanfare as characters materialize around 5.0s (t ≈ 0.71)
+    if (t >= 0.71 && !_hasTriggeredCharacterFanfare) {
+      _hasTriggeredCharacterFanfare = true;
       AudioManager().playFanfare();
     }
   }
 
-  void _onTimelineStatus(AnimationStatus status) {
-    if (status == AnimationStatus.completed) {
-      // Auto-transition to home screen once sequence completes
-      _beginJourney();
+  /// Asynchronously loads app resources and precaches all 9 hero layers
+  Future<void> _startBackgroundInitialization() async {
+    final assetsToPrecache = [
+      'assets/images/hero_splash/background.png',
+      'assets/images/hero_splash/flowers.png',
+      'assets/images/hero_splash/kids.png',
+      'assets/images/hero_splash/book.png',
+      'assets/images/hero_splash/constalations.png',
+      'assets/images/hero_splash/char1.png',
+      'assets/images/hero_splash/char2.png',
+      'assets/images/hero_splash/char3.png',
+      'assets/images/hero_splash/char4.png',
+    ];
+
+    final totalSteps = assetsToPrecache.length + 2;
+    int completedSteps = 0;
+
+    void updateProgress() {
+      if (!mounted) return;
+      setState(() {
+        _loadingProgress = (completedSteps / totalSteps).clamp(0.0, 1.0);
+      });
     }
+
+    // Step 1: Wait for GameState to initialize
+    try {
+      final gameState = Provider.of<GameState>(context, listen: false);
+      while (gameState.isLoading) {
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+    } catch (_) {}
+    completedSteps++;
+    updateProgress();
+
+    // Step 2..N: Precache all 9 hero assets
+    for (final asset in assetsToPrecache) {
+      try {
+        await precacheImage(AssetImage(asset), context);
+      } catch (_) {}
+      completedSteps++;
+      updateProgress();
+      await Future.delayed(const Duration(milliseconds: 40));
+    }
+
+    // Final buffer for smooth visual progress bar fill
+    completedSteps++;
+    updateProgress();
+
+    if (mounted) {
+      setState(() {
+        _isLoaded = true;
+      });
+    }
+  }
+
+  /// User interactive tap action
+  void _onTapToBegin() {
+    if (_hasTransitioned || !_isLoaded) return;
+    _hasTransitioned = true;
+
+    // 1. Tactile Audio Feedback
+    AudioManager().playTap();
+
+    // 2. Trigger Tap Feedback Transition (light burst, camera push, fade)
+    _tapTransitionController.forward().then((_) {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 650),
+          pageBuilder: (context, anim1, anim2) => const MainShellScreen(),
+          transitionsBuilder: (context, anim1, anim2, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: anim1,
+                curve: Curves.easeInOutCubic,
+              ),
+              child: child,
+            );
+          },
+        ),
+      );
+    });
   }
 
   @override
   void dispose() {
-    _masterController.removeListener(_onTimelineUpdate);
-    _masterController.removeStatusListener(_onTimelineStatus);
-    _masterController.dispose();
-    _loopController.dispose();
+    _introController.removeListener(_onIntroUpdate);
+    _introController.dispose();
+    _idleLoopController.dispose();
+    _tapTransitionController.dispose();
     super.dispose();
-  }
-
-  void _beginJourney() {
-    if (_hasTransitioned || !mounted) return;
-    _hasTransitioned = true;
-
-    AudioManager().playTap();
-
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 900),
-        pageBuilder: (context, anim1, anim2) => const MainShellScreen(),
-        transitionsBuilder: (context, anim1, anim2, child) {
-          return FadeTransition(
-            opacity: CurvedAnimation(
-              parent: anim1,
-              curve: Curves.easeInOutCubic,
-            ),
-            child: child,
-          );
-        },
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Accessibility: Check if system prefers reduced motion
+    final disableAnimations = MediaQuery.of(context).disableAnimations;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: _beginJourney, // Tap anywhere to begin immediately
+        onTap: _isLoaded ? _onTapToBegin : null,
         child: AnimatedBuilder(
-          animation: Listenable.merge([_masterController, _loopController]),
+          animation: Listenable.merge([
+            _introController,
+            _idleLoopController,
+            _tapTransitionController,
+          ]),
           builder: (context, child) {
-            final masterT = _masterController.value;
-            final loopT = _loopController.value;
-            final continuousTime = (loopT * 4.0) + (masterT * 9.5);
+            final introT = disableAnimations ? 1.0 : _introController.value;
+            final loopT = disableAnimations ? 0.0 : _idleLoopController.value;
+            final tapT = _tapTransitionController.value;
 
-            // Phase 1: Fade In from Black (0.0 to 0.15)
-            final fadeInOpacity = (masterT / 0.15).clamp(0.0, 1.0);
+            final continuousTime = (loopT * 4.0) + (introT * 7.0);
 
-            // Phase 1 to 5: Camera Slow Zoom (3-5% zoom from 1.0 to 1.045)
-            final cameraZoom = 1.0 + (0.045 * Curves.easeOutQuad.transform(masterT));
+            // --- STAGE 1: FADE IN FROM BLACK (0.0 to 0.14) ---
+            final fadeInOpacity = disableAnimations
+                ? 1.0
+                : (introT / 0.14).clamp(0.0, 1.0);
 
-            // Phase 2: Living World Progress (active from 0.05 onwards)
-            final livingWorldProgress = ((masterT - 0.05) / 0.95).clamp(0.0, 1.0);
+            // --- CAMERA ZOOM ---
+            // Stage 1 & 2: Zooms smoothly from 1.00 to 1.045
+            // Stage 4: Subtle gentle breathing
+            // Tap: Snappy push-in zoom to 1.09
+            final baseZoom = 1.00 + (0.045 * Curves.easeOutQuad.transform(introT));
+            final tapZoom = 0.045 * Curves.easeOutCubic.transform(tapT);
+            final cameraZoom = baseZoom + tapZoom;
 
-            // Phase 3: Book Awakening & Light Beam (starts at ~2.0s -> masterT: 0.21)
-            final bookProgress = ((masterT - 0.21) / 0.45).clamp(0.0, 1.0);
+            // Background Brightening ramp (Stage 1: 0.0 to 0.14)
+            final brightness = (0.2 + 0.8 * (introT / 0.14)).clamp(0.2, 1.0);
 
-            // Phase 4: Spiral Particles (starts at ~2.8s -> masterT: 0.29)
-            final spiralProgress = ((masterT - 0.29) / 0.45).clamp(0.0, 1.0);
-
-            // Phase 4: Constellations Traced (starts at ~3.2s -> masterT: 0.33)
-            final constellationProgress = ((masterT - 0.33) / 0.45).clamp(0.0, 1.0);
-
-            // Phase 4: Character Apparitions Sequence (starts at ~4.2s -> masterT: 0.44)
-            final charactersProgress = ((masterT - 0.44) / 0.45).clamp(0.0, 1.0);
-
-            // Phase 5: Title & Tap Prompt (starts at ~7.2s -> masterT: 0.75)
-            final titleProgress = ((masterT - 0.75) / 0.25).clamp(0.0, 1.0);
+            // Parallax pan offset (subtle natural sway)
+            final parallaxOffset = Offset(
+              math.sin(continuousTime * 0.4) * 8.0,
+              math.cos(continuousTime * 0.3) * 5.0,
+            );
 
             return Opacity(
               opacity: fadeInOpacity,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // 1. CAMERA-ZOOMED BACKGROUND HERO ARTWORK
-                  Transform.scale(
-                    scale: cameraZoom,
-                    child: Image.asset(
-                      'assets/images/splash_hero_art.jpg',
-                      fit: BoxFit.cover,
-                      alignment: Alignment.center,
-                    ),
+                  // 1. HERO BACKGROUND LAYER (Palace, sky, temple pillars, horizon)
+                  HeroBackgroundLayer(
+                    introProgress: introT,
+                    idleTime: continuousTime,
+                    cameraZoom: cameraZoom,
+                    brightness: brightness,
+                    parallaxOffset: parallaxOffset,
                   ),
 
-                  // 2. MAGICAL SKY VEIL (Shrouds characters in evening twilight until they materialize)
-                  MagicalSkyVeilWidget(
-                    revealProgress: charactersProgress,
-                    pulseTime: continuousTime,
+                  // 2. CLOUD LAYER (Horizontal drifting volumetric clouds)
+                  CloudLayer(
+                    introProgress: introT,
+                    idleTime: continuousTime,
                   ),
 
-                  // 3. CLOSED SACRED SCRIPTURE BOOK (Shakes and opens into glowing pages)
-                  ClosedBookWidget(
-                    progress: bookProgress,
-                    pulseTime: continuousTime,
+                  // 3. BIRD LAYER (Silhouette birds soaring across sky)
+                  BirdLayer(
+                    introProgress: introT,
+                    idleTime: continuousTime,
                   ),
 
-                  // 4. LIVING WORLD LAYER: Stars, Lanterns, Fountain, Fireflies
-                  CustomPaint(
-                    painter: LivingWorldPainter(
-                      animationValue: loopT,
-                      worldProgress: livingWorldProgress,
-                    ),
+                  // 4. LIGHT GLOW & GOD RAYS LAYER (Constellations, book rays, ambient bloom)
+                  LightGlowLayer(
+                    introProgress: introT,
+                    idleTime: continuousTime,
                   ),
 
-                  // 5. BOOK LIGHT BEAM & RADIAL GOD-RAYS (Awakening Phase)
-                  BookLightBeamWidget(
-                    awakeningProgress: bookProgress,
-                    pulseTime: continuousTime,
+                  // 5. CHARACTER STAGE LAYER (Flowers, kids, scripture book, 4 story deities)
+                  CharacterStageLayer(
+                    introProgress: introT,
+                    idleTime: continuousTime,
+                    parallaxOffset: parallaxOffset,
                   ),
 
-                  // 6. ASCENDING GOLDEN HELICAL SPIRAL PARTICLES
-                  CustomPaint(
-                    painter: GoldenParticleSystem(
-                      progress: spiralProgress,
-                      time: continuousTime,
-                    ),
+                  // 6. BUTTERFLY LAYER (3D fluttering jewel butterflies)
+                  ButterflyLayer(
+                    introProgress: introT,
+                    idleTime: continuousTime,
                   ),
 
-                  // 7. CONSTELLATION STAR LINES IN THE SKY
-                  CustomPaint(
-                    painter: ConstellationPainter(
-                      progress: constellationProgress,
-                    ),
+                  // 7. PARTICLE LAYER (Golden stardust, rising book embers, twinkles)
+                  ParticleLayer(
+                    introProgress: introT,
+                    idleTime: continuousTime,
                   ),
 
-                  // 8. CELESTIAL STORY CHARACTERS APPARITIONS
-                  // (Lord Ram, Sita, Royal King, Flying Winged Lion with Flapping Wings)
-                  CelestialCharactersWidget(
-                    charactersProgress: charactersProgress,
-                    hoverTime: continuousTime,
+                  // 8. TAP TO BEGIN & TITLE OVERLAY (Title, Loading bar -> "Tap to Begin")
+                  TapToBeginOverlay(
+                    introProgress: introT,
+                    idleTime: continuousTime,
+                    loadingProgress: _loadingProgress,
+                    isLoaded: _isLoaded,
+                    onTap: _onTapToBegin,
                   ),
 
-                  // 7. CINEMATIC VIGNETTE OVERLAY GRADIENT
-                  IgnorePointer(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withOpacity(0.50),
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.65),
-                          ],
-                          stops: const [0.0, 0.45, 1.0],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // 8. FINAL SCENE: "कथाQuest" TITLE & "Tap Anywhere to Begin"
-                  SplashTitleOverlay(
-                    progress: titleProgress,
-                    pulseTime: continuousTime,
-                    onBeginTap: _beginJourney,
-                  ),
+                  // 9. TAP FEEDBACK BURST & TRANSITION FLASH
+                  if (tapT > 0)
+                    _buildTapFeedbackOverlay(tapT),
                 ],
               ),
             );
           },
         ),
+      ),
+    );
+  }
+
+  /// Premium visual tap feedback: light burst, sparkles, and radiant fade
+  Widget _buildTapFeedbackOverlay(double t) {
+    // 0.0 -> 0.3: Rapid golden flash burst
+    // 0.3 -> 1.0: Smooth fade to radiant white/theme
+    final flashOpacity = (t < 0.35)
+        ? (t / 0.35).clamp(0.0, 1.0)
+        : (1.0 - (t - 0.35) / 0.65 * 0.25).clamp(0.0, 1.0);
+
+    return IgnorePointer(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Radial Golden Flash Burst
+          Opacity(
+            opacity: (math.sin(t * math.pi) * 0.85).clamp(0.0, 1.0),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment(0.0, 0.5),
+                  radius: 1.2,
+                  colors: [
+                    Color(0xEEFFFFFF),
+                    Color(0x99FFE082),
+                    Color(0x44FFA000),
+                    Colors.transparent,
+                  ],
+                  stops: [0.0, 0.3, 0.6, 1.0],
+                ),
+              ),
+            ),
+          ),
+
+          // Radiant Curtain Fade
+          Opacity(
+            opacity: flashOpacity * Curves.easeInQuad.transform(t),
+            child: Container(
+              color: const Color(0xFFFFF8E7), // Royal parchment light
+            ),
+          ),
+        ],
       ),
     );
   }
