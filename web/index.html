@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="KathaQuest: An interactive bilingual storytelling and learning adventure for children.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="KathaQuest">
+
+  <title>KathaQuest - Interactive Storybook & Learning Adventure</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #FFD166, #FF9F1C, #FF6B6B);
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .loading-container {
+      text-align: center;
+      color: white;
+    }
+    .loading-emoji {
+      font-size: 64px;
+      animation: bounce 1.2s infinite alternate;
+    }
+    @keyframes bounce {
+      from { transform: translateY(0px); }
+      to { transform: translateY(-20px); }
+    }
+    .loading-text {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 16px;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading-container">
+    <div class="loading-emoji">🐢✨🐰</div>
+    <div class="loading-text">Loading KathaQuest...</div>
+  </div>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

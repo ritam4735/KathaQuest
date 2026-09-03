@@ -1,0 +1,7 @@
+StoryId,StepId,Speaker,TextEn,TextRegional,AudioFile
+story_hare_tortoise,step_1_intro,Narrator,"Once upon a sunny morning in the green woods, Chipper the Hare was bragging to all the woodland creatures.","एक सुनहरी सुबह घने जंगल में, चीकू खरगोश सभी जानवरों के सामने अपनी तेज़ी की डींगें हांक रहा था।",narr_s1_step1.mp3
+story_hare_tortoise,step_1_intro,Hare,"Nobody in this forest is faster than me! Who dares to race me?","मुझसे तेज़ इस जंगल में कोई नहीं दौड़ सकता! क्या कोई मुझसे मुकाबला करेगा?",hare_boast.mp3
+story_hare_tortoise,step_1_intro,Tortoise,"I will race you, friend Chipper.","मैं तुम्हारे साथ दौड़ लगाऊंगा, चीकू भाई।",tortoise_accept.mp3
+story_hare_tortoise,step_3_race,Narrator,"Wise Old Owl flapped his wings and shouted: Ready, Steady, GO! Hare zoomed off in a cloud of dust!","बुद्धिमान उल्लू ने पंख फड़फड़ाए और कहा: तैयार, स्थिर, दौड़ो! खरगोश धूल उड़ाता हुआ पलक झपकते ही गायब हो गया!",narr_s1_step3.mp3
+story_hare_tortoise,step_5_nap,Narrator,"Chipper looked back and saw Timo was miles behind. I have plenty of time for a crunchy apple and a quick nap under this tree, he yawned.","चीकू ने पीछे मुड़कर देखा, कछुआ बहुत दूर था। मेरे पास मीठा सेब खाने और छांव में सोने का बहुत समय है, उसने जम्हाई ली।",narr_s1_step5.mp3
+story_hare_tortoise,step_7_finish,Narrator,"The forest animals erupted into loud cheers as Timo approached the golden ribbon! The roar woke Chipper with a start!","जैसे ही टीमो फिनिश रिबन के करीब पहुंचा, जंगल के जानवरों ने तालियां बजाईं! शोर सुनकर चीकू हड़बड़ा कर उठा!",narr_s1_step7.mp3

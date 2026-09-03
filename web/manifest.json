@@ -1,0 +1,11 @@
+{
+  "name": "KathaQuest",
+  "short_name": "KathaQuest",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FF9F1C",
+  "theme_color": "#FF9F1C",
+  "description": "An interactive bilingual storytelling and learning adventure for children.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false
+}

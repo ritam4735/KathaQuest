@@ -1,0 +1,44 @@
+name: katha_quest
+description: "KathaQuest: An interactive bilingual storytelling and learning adventure for children."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+  shared_preferences: ^2.2.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/backgrounds_for_hare_tortoise_story/
+    - assets/spritesheets/
+    - assets/spritesheets/hare/idle/
+    - assets/spritesheets/hare/walk/
+    - assets/spritesheets/hare/run/
+    - assets/spritesheets/hare/happy/
+    - assets/spritesheets/hare/sleep/
+    - assets/spritesheets/hare/surprised/
+    - assets/spritesheets/hare/cheer/
+    - assets/spritesheets/tortoise/idle/
+    - assets/spritesheets/tortoise/walk/
+    - assets/spritesheets/tortoise/run/
+    - assets/spritesheets/tortoise/sleep/
+    - assets/spritesheets/tortoise/climb/
+    - assets/spritesheets/tortoise/win/
+    - assets/spritesheets/badges/
+    - assets/audio/
