@@ -164,5 +164,88 @@ void main() {
       gameState.toggleSfx();
       expect(gameState.profile.isSfxEnabled, false);
     });
+
+    test('Pause and restart step mechanics function correctly', () {
+      expect(gameState.isPaused, false);
+      expect(gameState.stepRevision, 0);
+
+      // Pause
+      gameState.setPaused(true);
+      expect(gameState.isPaused, true);
+
+      // Restart step resets pause and increments stepRevision
+      gameState.restartCurrentStep();
+      expect(gameState.isPaused, false);
+      expect(gameState.stepRevision, 1);
+
+      // Subsequent restart increments further
+      gameState.restartCurrentStep();
+      expect(gameState.stepRevision, 2);
+    });
+
+    test('Quiz questions include comprehensive bilingual educational explanations', () {
+      final story = SampleStories.hareAndTortoise;
+      final quiz = story.steps[9] as QuizStep;
+
+      for (final q in quiz.questions) {
+        expect(q.explanationEn.isNotEmpty, true, reason: 'explanationEn must not be empty');
+        expect(q.explanationRegional.isNotEmpty, true, reason: 'explanationRegional must not be empty');
+      }
+    });
+
+    test('Achievement claiming awards XP/Coins and prevents duplicate claims in database', () {
+      expect(gameState.profile.claimedAchievementIds.contains('story_explorer'), false);
+      final initialXp = gameState.profile.currentXp;
+      final initialCoins = gameState.profile.coins;
+
+      // First claim succeeds
+      final success = gameState.claimAchievement('story_explorer', 500, 50);
+      expect(success, true);
+      expect(gameState.profile.claimedAchievementIds.contains('story_explorer'), true);
+      expect(gameState.profile.currentXp, initialXp + 500);
+      expect(gameState.profile.coins, initialCoins + 50);
+
+      // Duplicate claim fails
+      final duplicate = gameState.claimAchievement('story_explorer', 500, 50);
+      expect(duplicate, false);
+      expect(gameState.profile.coins, initialCoins + 50);
+    });
+
+    test('Daily Quest claiming awards 300 XP and Coins and records claim date', () {
+      final initialXp = gameState.profile.currentXp;
+      final initialCoins = gameState.profile.coins;
+
+      // First claim succeeds
+      final success = gameState.claimDailyQuest();
+      expect(success, true);
+      expect(gameState.profile.lastDailyQuestClaimedDate, isNotNull);
+      expect(gameState.profile.currentXp, initialXp + 300);
+      expect(gameState.profile.coins, initialCoins + 300);
+
+      // Subsequent claim today fails
+      final duplicate = gameState.claimDailyQuest();
+      expect(duplicate, false);
+      expect(gameState.profile.coins, initialCoins + 300);
+    });
+
+    test('Player avatar customization updates profile and database state', () {
+      gameState.updateAvatar(emoji: '👑', asset: 'assets/images/story_vikram_betaal.jpg');
+      expect(gameState.profile.avatarEmoji, '👑');
+      expect(gameState.profile.avatarAsset, 'assets/images/story_vikram_betaal.jpg');
+    });
+
+    test('Parent screen time limit updates profile and database state', () {
+      gameState.setScreenTimeLimit(45);
+      expect(gameState.profile.screenTimeLimitMinutes, 45);
+    });
+
+    test('Database reset restores defaults cleanly', () async {
+      gameState.claimAchievement('ruby_red', 1000, 150);
+      expect(gameState.profile.claimedAchievementIds.contains('ruby_red'), true);
+
+      await gameState.resetAllProgress();
+      expect(gameState.profile.claimedAchievementIds.contains('ruby_red'), false);
+      expect(gameState.currentStory, isNull);
+    });
   });
 }

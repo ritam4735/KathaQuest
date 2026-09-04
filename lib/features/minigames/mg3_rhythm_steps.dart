@@ -1,21 +1,27 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/models/story_model.dart';
 import '../../core/audio_manager.dart';
 import '../../core/app_theme.dart';
+import '../../core/haptic_feedback_helper.dart';
+import '../../state/game_state.dart';
 import '../../widgets/animated_sprite_widget.dart';
 import '../../widgets/magical_speech_bubble.dart';
 import 'minigame_container.dart';
+import 'minigame_celebration_dialog.dart';
 
 class RhythmStepsMiniGame extends StatefulWidget {
   final MiniGameStep step;
   final Function(int score) onComplete;
+  final VoidCallback? onPause;
 
   const RhythmStepsMiniGame({
     super.key,
     required this.step,
     required this.onComplete,
+    this.onPause,
   });
 
   @override
@@ -50,6 +56,9 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
+      final isPaused = context.read<GameState>().isPaused;
+      if (isPaused) return; // Freeze timer countdown while paused
+
       setState(() {
         if (_remainingSeconds > 0) {
           _remainingSeconds--;
@@ -77,6 +86,8 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
 
   void _updateNotes() {
     if (_isGameOver || !mounted) return;
+    final isPaused = context.read<GameState>().isPaused;
+    if (isPaused) return; // Freeze note movement while paused
 
     if (_random.nextDouble() < 0.045) {
       _spawnNote();
@@ -105,6 +116,8 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
 
   void _handleLaneTap(bool isLeft) {
     if (_isGameOver) return;
+    final isPaused = context.read<GameState>().isPaused;
+    if (isPaused) return;
 
     // Find the note closest to the hit line (y: 0.75 - 0.95)
     _BeatNote? targetNote;
@@ -126,11 +139,13 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
       final pointsAwarded = 10 + (_combo > 3 ? 5 : 0);
       _score += pointsAwarded;
       _rhythmFeedback = _combo > 2 ? 'Combo x$_combo! 🌟' : 'Perfect! 🎵';
+      HapticHelper.collect();
       AudioManager().playFootstep();
       AudioManager().playStar();
     } else {
       _combo = 0;
       _rhythmFeedback = 'Tap on line! 🐾';
+      HapticHelper.light();
       AudioManager().playTap();
     }
 
@@ -151,47 +166,18 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
     _isGameOver = true;
     _controller.stop();
     _timer?.cancel();
+    _feedbackTimer?.cancel();
 
     AudioManager().playCheer();
 
-    showDialog(
+    final gameState = context.read<GameState>();
+    MiniGameCelebrationDialog.show(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
-          '🎵 Rhythm Walk Perfected!',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🐢🎶', style: TextStyle(fontSize: 56)),
-            const SizedBox(height: 12),
-            Text(
-              'Timo quietly marched past the sleeping hare with great musical rhythm! Final score: $_score!',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-        actions: [
-          Center(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                widget.onComplete(_score);
-              },
-              child: const Text('Continue Story! ➡️'),
-            ),
-          ),
-        ],
-      ),
+      score: _score,
+      targetScore: widget.step.targetScore,
+      emoji: '🐢🎶',
+      isHindi: gameState.isHindi,
+      onContinue: () => widget.onComplete(_score),
     );
   }
 
@@ -199,6 +185,7 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
   void dispose() {
     _controller.dispose();
     _timer?.cancel();
+    _feedbackTimer?.cancel();
     super.dispose();
   }
 
@@ -210,6 +197,7 @@ class _RhythmStepsMiniGameState extends State<RhythmStepsMiniGame>
       currentScore: _score,
       targetScore: widget.step.targetScore,
       remainingSeconds: _remainingSeconds,
+      onPause: widget.onPause,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final halfWidth = constraints.maxWidth / 2;

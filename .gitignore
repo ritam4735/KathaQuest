@@ -1,27 +1,56 @@
-# Miscellaneous
+# ==============================================================================
+# KathaQuest .gitignore
+# Cross-platform Flutter / Android / iOS / Web / Python Tooling
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Miscellaneous & Operating System Files
+# ------------------------------------------------------------------------------
 *.class
 *.log
 *.pyc
 *.swp
-.DS_Store
-.atom/
-.buildlog/
+*.swo
+*~
 .history
+.buildlog/
+.atom/
 .svn/
 migrate_working_dir/
 
-# IntelliJ related
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+
+# Linux
+.directory
+.Trash-*
+
+# ------------------------------------------------------------------------------
+# IDEs and Text Editors
+# ------------------------------------------------------------------------------
+# Visual Studio Code
+.vscode/
+
+# IntelliJ IDEA / Android Studio
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# Visual Studio Code related
-.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# ------------------------------------------------------------------------------
+# Flutter / Dart / Pub
+# ------------------------------------------------------------------------------
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -29,21 +58,105 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-
-# Web related
-
-# Symbol processing related
+build/
+**/doc/api/
 symbols/
 
-# Output of the package metadata tool
-.packages
+# ------------------------------------------------------------------------------
+# Web
+# ------------------------------------------------------------------------------
+lib/generated_plugin_registrant.dart
 
+# ------------------------------------------------------------------------------
+# Android
+# ------------------------------------------------------------------------------
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+**/android/.cxx/
+.cxx/
+**/android/**/gradle-wrapper.jar
+**/android/**/GeneratedPluginRegistrant.java
+**/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
+# Keystore and signing keys
+key.properties
+*.keystore
+*.jks
+
+# ------------------------------------------------------------------------------
+# iOS and macOS
+# ------------------------------------------------------------------------------
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/ios/ServiceDefinitions.json
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/**/xcuserdata/
+**/ios/**/DerivedData/
+**/ios/**/*.xcworkspace/xcuserdata/
+**/ios/**/*.xcodeproj/xcuserdata/
+**/macos/Flutter/ephemeral/
+
+# ------------------------------------------------------------------------------
+# Desktop (Windows & Linux)
+# ------------------------------------------------------------------------------
+**/windows/flutter/ephemeral/
+**/linux/flutter/ephemeral/
+
+# ------------------------------------------------------------------------------
+# Build Artifacts
+# ------------------------------------------------------------------------------
+*.apk
+*.aab
+*.ap_
+*.dex
+*.ipa
+*.app
+Builds/
+
+# ------------------------------------------------------------------------------
+# Environment Variables & Secrets
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+google-services.json
+GoogleService-Info.plist
+
+# ------------------------------------------------------------------------------
+# Testing and Code Coverage
+# ------------------------------------------------------------------------------
+coverage/
+*.lcov
+.test_result/
+
+# ------------------------------------------------------------------------------
+# Python (Tools and Automation Scripts)
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# ------------------------------------------------------------------------------
+# Legacy Unity Cache Artifacts
+# ------------------------------------------------------------------------------
 Library/
 Temp/
 Obj/
 Logs/
 UserSettings/
-Builds/
-*.apk
-*.aab

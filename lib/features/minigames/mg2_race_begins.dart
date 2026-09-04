@@ -1,21 +1,27 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/models/story_model.dart';
 import '../../core/audio_manager.dart';
 import '../../core/app_theme.dart';
+import '../../core/haptic_feedback_helper.dart';
+import '../../state/game_state.dart';
 import '../../widgets/steady_meter.dart';
 import '../../widgets/animated_sprite_widget.dart';
 import '../../widgets/magical_speech_bubble.dart';
 import 'minigame_container.dart';
+import 'minigame_celebration_dialog.dart';
 
 class RaceBeginsMiniGame extends StatefulWidget {
   final MiniGameStep step;
   final Function(int score) onComplete;
+  final VoidCallback? onPause;
 
   const RaceBeginsMiniGame({
     super.key,
     required this.step,
     required this.onComplete,
+    this.onPause,
   });
 
   @override
@@ -47,6 +53,9 @@ class _RaceBeginsMiniGameState extends State<RaceBeginsMiniGame>
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
+      final isPaused = context.read<GameState>().isPaused;
+      if (isPaused) return; // Freeze countdown while paused
+
       setState(() {
         if (_remainingSeconds > 0) {
           _remainingSeconds--;
@@ -59,6 +68,8 @@ class _RaceBeginsMiniGameState extends State<RaceBeginsMiniGame>
 
   void _gameTick() {
     if (_isGameOver || !mounted) return;
+    final isPaused = context.read<GameState>().isPaused;
+    if (isPaused) return; // Freeze needle decay and scoring while paused
 
     setState(() {
       // Natural decay towards slow
@@ -69,6 +80,7 @@ class _RaceBeginsMiniGameState extends State<RaceBeginsMiniGame>
         _score += 1;
         if (_score % 10 == 0) {
           AudioManager().playFootstep();
+          HapticHelper.light();
         }
       }
     });
@@ -80,6 +92,10 @@ class _RaceBeginsMiniGameState extends State<RaceBeginsMiniGame>
 
   void _handleTap() {
     if (_isGameOver) return;
+    final isPaused = context.read<GameState>().isPaused;
+    if (isPaused) return;
+
+    HapticHelper.light();
     AudioManager().playTap();
     setState(() {
       _needleValue = (_needleValue + 0.12).clamp(0.0, 1.0);
@@ -94,44 +110,14 @@ class _RaceBeginsMiniGameState extends State<RaceBeginsMiniGame>
 
     AudioManager().playCheer();
 
-    showDialog(
+    final gameState = context.read<GameState>();
+    MiniGameCelebrationDialog.show(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
-          '🎉 Steady Pacing Mastered!',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🐢⚖️', style: TextStyle(fontSize: 56)),
-            const SizedBox(height: 12),
-            Text(
-              'Wonderful! You kept Timo moving with calm, steady determination and scored $_score points!',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-        actions: [
-          Center(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.secondary,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                widget.onComplete(_score);
-              },
-              child: const Text('Continue Story! ➡️'),
-            ),
-          ),
-        ],
-      ),
+      score: _score,
+      targetScore: widget.step.targetScore,
+      emoji: '🐢⚖️',
+      isHindi: gameState.isHindi,
+      onContinue: () => widget.onComplete(_score),
     );
   }
 
@@ -150,6 +136,7 @@ class _RaceBeginsMiniGameState extends State<RaceBeginsMiniGame>
       currentScore: _score,
       targetScore: widget.step.targetScore,
       remainingSeconds: _remainingSeconds,
+      onPause: widget.onPause,
       child: Stack(
         children: [
           // Background scenic track
@@ -294,45 +281,45 @@ class _RaceBeginsMiniGameState extends State<RaceBeginsMiniGame>
                     isInSteadyZone: isInSteadyZone,
                   ),
 
-              // Big Kid-Friendly Tap Button
-              GestureDetector(
-                onTap: _handleTap,
-                child: Container(
-                  width: 220,
-                  height: 80,
-                  decoration: AppTheme.tactileButtonDecoration(
-                    topColor: isInSteadyZone
-                        ? const Color(0xFF2EC4B6)
-                        : const Color(0xFFFF9F1C),
-                    bottomColor: isInSteadyZone
-                        ? const Color(0xFF00A896)
-                        : const Color(0xFFE76F51),
-                    radius: 28,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text('🐾', style: TextStyle(fontSize: 32)),
-                      SizedBox(width: 12),
-                      Text(
-                        'TAP STEADY!',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.1,
-                        ),
+                  // Big Kid-Friendly Tap Button
+                  GestureDetector(
+                    onTap: _handleTap,
+                    child: Container(
+                      width: 220,
+                      height: 80,
+                      decoration: AppTheme.tactileButtonDecoration(
+                        topColor: isInSteadyZone
+                            ? const Color(0xFF2EC4B6)
+                            : const Color(0xFFFF9F1C),
+                        bottomColor: isInSteadyZone
+                            ? const Color(0xFF00A896)
+                            : const Color(0xFFE76F51),
+                        radius: 28,
                       ),
-                    ],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Text('🐾', style: TextStyle(fontSize: 32)),
+                          SizedBox(width: 12),
+                          Text(
+                            'TAP STEADY!',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
-    ],
-  ),
-);
+    );
   }
 }

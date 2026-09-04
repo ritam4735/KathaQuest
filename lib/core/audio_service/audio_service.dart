@@ -7,4 +7,7 @@ abstract class AudioService {
   static AudioService get instance => _instance ??= createAudioService();
 
   void playSound(String sfxName);
+
+  /// Preload all sound files into memory for instant playback.
+  Future<void> preloadAll(List<String> sfxNames) async {}
 }

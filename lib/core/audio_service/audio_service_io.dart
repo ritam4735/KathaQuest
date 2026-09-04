@@ -7,4 +7,7 @@ class IoAudioService implements AudioService {
   void playSound(String sfxName) {
     // Non-web fallback
   }
+
+  @override
+  Future<void> preloadAll(List<String> sfxNames) async {}
 }

@@ -1,5 +1,6 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../state/game_state.dart';
 
 class SpriteAnimationData {
   final String folder;
@@ -127,9 +128,10 @@ class AnimatedSpriteWidget extends StatefulWidget {
   State<AnimatedSpriteWidget> createState() => _AnimatedSpriteWidgetState();
 }
 
-class _AnimatedSpriteWidgetState extends State<AnimatedSpriteWidget> {
-  int _currentFrame = 0;
-  Timer? _timer;
+class _AnimatedSpriteWidgetState extends State<AnimatedSpriteWidget>
+    with SingleTickerProviderStateMixin {
+  AnimationController? _controller;
+  bool _wasPaused = false;
 
   SpriteAnimationData? get _animData =>
       AnimatedSpriteWidget.registry[widget.animation];
@@ -137,7 +139,34 @@ class _AnimatedSpriteWidgetState extends State<AnimatedSpriteWidget> {
   @override
   void initState() {
     super.initState();
-    _startAnimation();
+    _initController();
+  }
+
+  void _initController() {
+    _controller?.dispose();
+    final data = _animData;
+    if (data == null || data.frameCount <= 1) {
+      _controller = null;
+      return;
+    }
+
+    final effectiveFps = widget.fps ?? data.defaultFps;
+    final totalDurationMs = (data.frameCount * 1000 / effectiveFps).round();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: totalDurationMs),
+    )..addListener(() {
+        if (mounted) setState(() {});
+      });
+
+    if (widget.loop) {
+      _controller!.repeat();
+    } else {
+      _controller!.forward().then((_) {
+        widget.onComplete?.call();
+      });
+    }
   }
 
   @override
@@ -146,44 +175,35 @@ class _AnimatedSpriteWidgetState extends State<AnimatedSpriteWidget> {
     if (oldWidget.animation != widget.animation ||
         oldWidget.fps != widget.fps ||
         oldWidget.loop != widget.loop) {
-      _currentFrame = 0;
-      _startAnimation();
+      _initController();
     }
-  }
-
-  void _startAnimation() {
-    _timer?.cancel();
-    final data = _animData;
-    if (data == null || data.frameCount <= 1) return;
-
-    final effectiveFps = widget.fps ?? data.defaultFps;
-    final interval = Duration(milliseconds: (1000 / effectiveFps).round());
-
-    _timer = Timer.periodic(interval, (timer) {
-      if (!mounted) return;
-      setState(() {
-        if (_currentFrame < data.frameCount - 1) {
-          _currentFrame++;
-        } else {
-          if (widget.loop) {
-            _currentFrame = 0;
-          } else {
-            _timer?.cancel();
-            widget.onComplete?.call();
-          }
-        }
-      });
-    });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final gameState = context.watch<GameState?>();
+    final isPaused = gameState?.isPaused ?? false;
+
+    if (_controller != null) {
+      if (isPaused && !_wasPaused) {
+        _controller!.stop(canceled: false);
+        _wasPaused = true;
+      } else if (!isPaused && _wasPaused) {
+        if (widget.loop) {
+          _controller!.repeat();
+        } else if (_controller!.value < 1.0) {
+          _controller!.forward();
+        }
+        _wasPaused = false;
+      }
+    }
+
     final data = _animData;
     if (data == null) {
       // Fallback
@@ -196,7 +216,10 @@ class _AnimatedSpriteWidgetState extends State<AnimatedSpriteWidget> {
       );
     }
 
-    final framePath = data.getFramePath(_currentFrame);
+    final int frameIndex = _controller != null
+        ? (_controller!.value * data.frameCount).floor().clamp(0, data.frameCount - 1)
+        : 0;
+    final framePath = data.getFramePath(frameIndex);
 
     Widget imageWidget = Image.asset(
       framePath,

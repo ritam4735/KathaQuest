@@ -16,14 +16,19 @@ class StoryScreen extends StatelessWidget {
   const StoryScreen({super.key});
 
   void _showPauseDialog(BuildContext context, GameState gameState) {
+    gameState.setPaused(true);
     showDialog(
       context: context,
       barrierDismissible: false,
+      barrierColor: Colors.black38,
       builder: (ctx) => PauseDialog(
-        onResume: () => Navigator.of(ctx).pop(),
+        onResume: () {
+          gameState.setPaused(false);
+          Navigator.of(ctx).pop();
+        },
         onRestartStep: () {
           Navigator.of(ctx).pop();
-          // Trigger a re-render of current step
+          gameState.restartCurrentStep();
         },
         onExitToLibrary: () {
           Navigator.of(ctx).pop();
@@ -31,7 +36,11 @@ class StoryScreen extends StatelessWidget {
           Navigator.of(context).pop();
         },
       ),
-    );
+    ).then((_) {
+      if (gameState.isPaused) {
+        gameState.setPaused(false);
+      }
+    });
   }
 
   @override
@@ -79,24 +88,28 @@ class StoryScreen extends StatelessWidget {
             stepWidget = ForestWalkMiniGame(
               step: miniGameStep,
               onComplete: (score) => gameState.completeMiniGame(score),
+              onPause: () => _showPauseDialog(context, gameState),
             );
             break;
           case MiniGameType.raceBegins:
             stepWidget = RaceBeginsMiniGame(
               step: miniGameStep,
               onComplete: (score) => gameState.completeMiniGame(score),
+              onPause: () => _showPauseDialog(context, gameState),
             );
             break;
           case MiniGameType.rhythmSteps:
             stepWidget = RhythmStepsMiniGame(
               step: miniGameStep,
               onComplete: (score) => gameState.completeMiniGame(score),
+              onPause: () => _showPauseDialog(context, gameState),
             );
             break;
           case MiniGameType.finalSprint:
             stepWidget = FinalSprintMiniGame(
               step: miniGameStep,
               onComplete: (score) => gameState.completeMiniGame(score),
+              onPause: () => _showPauseDialog(context, gameState),
             );
             break;
         }
@@ -116,7 +129,9 @@ class StoryScreen extends StatelessWidget {
 
       case StoryStepType.reward:
         final rewardStep = currentStep as RewardStep;
-        gameState.finishStory(badge: rewardStep.badgeName);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          gameState.finishStory(badge: rewardStep.badgeName);
+        });
 
         stepWidget = RewardScreen(
           step: rewardStep,
@@ -139,7 +154,27 @@ class StoryScreen extends StatelessWidget {
               title: storyTitle,
               onPausePressed: () => _showPauseDialog(context, gameState),
             ),
-      body: stepWidget,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 600),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey<String>('${currentStep.id}_${gameState.currentStepIndex}_${gameState.stepRevision}'),
+          child: stepWidget,
+        ),
+      ),
     );
   }
 }

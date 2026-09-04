@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 class UserProfile {
+  static const int currentSaveVersion = 3;
+
   String playerName;
   String avatarEmoji;
   String avatarAsset;
@@ -13,13 +15,22 @@ class UserProfile {
   int storiesCompleted;
   int screenTimeMinutesToday;
   int totalReadingMinutes;
+  int screenTimeLimitMinutes;
   Map<String, int> storyStars;
   List<String> unlockedBadges;
+  List<String> claimedAchievementIds;
+  String? lastDailyQuestClaimedDate;
   bool isBgmEnabled;
   bool isSfxEnabled;
   bool isNarrationEnabled;
   String selectedLanguage; // 'en' or 'hi'
   double narrationSpeed;
+
+  // New fields for enhanced data handling
+  int saveVersion;
+  Map<String, int> lastPlayedAt; // storyId -> epoch milliseconds
+  int createdAt; // epoch milliseconds
+  int lastModifiedAt; // epoch milliseconds
 
   UserProfile({
     this.playerName = 'Aarav',
@@ -34,13 +45,20 @@ class UserProfile {
     this.storiesCompleted = 6,
     this.screenTimeMinutesToday = 15,
     this.totalReadingMinutes = 65,
+    this.screenTimeLimitMinutes = 30,
     Map<String, int>? storyStars,
     List<String>? unlockedBadges,
+    List<String>? claimedAchievementIds,
+    this.lastDailyQuestClaimedDate,
     this.isBgmEnabled = true,
     this.isSfxEnabled = true,
     this.isNarrationEnabled = true,
     this.selectedLanguage = 'en',
     this.narrationSpeed = 1.0,
+    this.saveVersion = currentSaveVersion,
+    Map<String, int>? lastPlayedAt,
+    int? createdAt,
+    int? lastModifiedAt,
   })  : storyStars = storyStars ?? {'story_rama_exile': 3, 'story_hare_tortoise': 3},
         unlockedBadges = unlockedBadges ?? [
           'Story Explorer',
@@ -49,7 +67,11 @@ class UserProfile {
           'Saffron Master',
           'Puzzle Solved',
           'Daily Streak',
-        ];
+        ],
+        claimedAchievementIds = claimedAchievementIds ?? [],
+        lastPlayedAt = lastPlayedAt ?? {},
+        createdAt = createdAt ?? DateTime.now().millisecondsSinceEpoch,
+        lastModifiedAt = lastModifiedAt ?? DateTime.now().millisecondsSinceEpoch;
 
   Map<String, dynamic> toMap() {
     return {
@@ -65,13 +87,20 @@ class UserProfile {
       'storiesCompleted': storiesCompleted,
       'screenTimeMinutesToday': screenTimeMinutesToday,
       'totalReadingMinutes': totalReadingMinutes,
+      'screenTimeLimitMinutes': screenTimeLimitMinutes,
       'storyStars': storyStars,
       'unlockedBadges': unlockedBadges,
+      'claimedAchievementIds': claimedAchievementIds,
+      'lastDailyQuestClaimedDate': lastDailyQuestClaimedDate,
       'isBgmEnabled': isBgmEnabled,
       'isSfxEnabled': isSfxEnabled,
       'isNarrationEnabled': isNarrationEnabled,
       'selectedLanguage': selectedLanguage,
       'narrationSpeed': narrationSpeed,
+      'saveVersion': saveVersion,
+      'lastPlayedAt': lastPlayedAt,
+      'createdAt': createdAt,
+      'lastModifiedAt': lastModifiedAt,
     };
   }
 
@@ -89,13 +118,20 @@ class UserProfile {
       storiesCompleted: map['storiesCompleted'] ?? 6,
       screenTimeMinutesToday: map['screenTimeMinutesToday'] ?? 15,
       totalReadingMinutes: map['totalReadingMinutes'] ?? 65,
+      screenTimeLimitMinutes: map['screenTimeLimitMinutes'] ?? 30,
       storyStars: Map<String, int>.from(map['storyStars'] ?? {}),
       unlockedBadges: List<String>.from(map['unlockedBadges'] ?? []),
+      claimedAchievementIds: List<String>.from(map['claimedAchievementIds'] ?? []),
+      lastDailyQuestClaimedDate: map['lastDailyQuestClaimedDate'] as String?,
       isBgmEnabled: map['isBgmEnabled'] ?? true,
       isSfxEnabled: map['isSfxEnabled'] ?? true,
       isNarrationEnabled: map['isNarrationEnabled'] ?? true,
       selectedLanguage: map['selectedLanguage'] ?? 'en',
       narrationSpeed: (map['narrationSpeed'] as num?)?.toDouble() ?? 1.0,
+      saveVersion: map['saveVersion'] ?? 1,
+      lastPlayedAt: Map<String, int>.from(map['lastPlayedAt'] ?? {}),
+      createdAt: map['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
+      lastModifiedAt: map['lastModifiedAt'] ?? DateTime.now().millisecondsSinceEpoch,
     );
   }
 
@@ -103,4 +139,17 @@ class UserProfile {
 
   factory UserProfile.fromJson(String source) =>
       UserProfile.fromMap(json.decode(source));
+
+  /// Record that a story was played right now.
+  void recordStoryPlayed(String storyId) {
+    lastPlayedAt[storyId] = DateTime.now().millisecondsSinceEpoch;
+    lastModifiedAt = DateTime.now().millisecondsSinceEpoch;
+  }
+
+  /// Get story IDs sorted by most recently played.
+  List<String> getRecentlyPlayedIds() {
+    final entries = lastPlayedAt.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return entries.map((e) => e.key).toList();
+  }
 }

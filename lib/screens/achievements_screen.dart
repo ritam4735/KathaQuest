@@ -12,130 +12,136 @@ class AchievementsScreen extends StatefulWidget {
 }
 
 class _AchievementsScreenState extends State<AchievementsScreen> {
-  final List<AchievementItem> _achievements = [
-    const AchievementItem(
-      id: 'story_explorer',
-      title: 'Story Explorer',
-      iconEmoji: '🦚',
-      primaryColor: Color(0xFF0288D1),
-      secondaryColor: Color(0xFF29B6F6),
-      currentProgress: 20,
-      targetProgress: 10,
-      xpReward: 500,
-      coinReward: 50,
-      unlockedSkinName: 'Ancient Scroll Skin',
-    ),
-    const AchievementItem(
-      id: 'emerald_green',
-      title: 'Emerald Green',
-      iconEmoji: '🦚',
-      primaryColor: Color(0xFF00897B),
-      secondaryColor: Color(0xFF4DB6AC),
-      currentProgress: 50,
-      targetProgress: 10,
-      xpReward: 600,
-      coinReward: 60,
-      unlockedSkinName: 'Peacock Feather Banner',
-    ),
-    const AchievementItem(
-      id: 'mythology_master',
-      title: 'Mythology Master',
-      iconEmoji: '🏹',
-      primaryColor: Color(0xFFD84315),
-      secondaryColor: Color(0xFFFF8A65),
-      currentProgress: 20,
-      targetProgress: 10,
-      xpReward: 750,
-      coinReward: 75,
-      unlockedSkinName: 'Golden Bow Emblem',
-    ),
-    const AchievementItem(
-      id: 'saffron_master',
-      title: 'Saffron Master',
-      iconEmoji: '🕉️',
-      primaryColor: Color(0xFFE65100),
-      secondaryColor: Color(0xFFFFB74D),
-      currentProgress: 20,
-      targetProgress: 10,
-      xpReward: 800,
-      coinReward: 80,
-      unlockedSkinName: 'Royal Saffron Robe',
-    ),
-    const AchievementItem(
-      id: 'puzzle_solved_gold',
-      title: 'Puzzle Solved',
-      iconEmoji: '❓',
-      primaryColor: Color(0xFFF57F17),
-      secondaryColor: Color(0xFFFFF176),
-      currentProgress: 30,
-      targetProgress: 10,
-      xpReward: 400,
-      coinReward: 40,
-      unlockedSkinName: 'Riddle Master Avatar',
-    ),
-    const AchievementItem(
-      id: 'puzzle_solved_cyan',
-      title: 'Puzzle Solved',
-      iconEmoji: '🧩',
-      primaryColor: Color(0xFF0097A7),
-      secondaryColor: Color(0xFF80DEEA),
-      currentProgress: 30,
-      targetProgress: 10,
-      xpReward: 450,
-      coinReward: 45,
-      unlockedSkinName: 'Mandala Solver Skin',
-    ),
-    const AchievementItem(
-      id: 'daily_streak',
-      title: 'Daily Streak',
-      iconEmoji: '🪷',
-      primaryColor: Color(0xFFC2185B),
-      secondaryColor: Color(0xFFF48FB1),
-      currentProgress: 30,
-      targetProgress: 10,
-      xpReward: 900,
-      coinReward: 100,
-      unlockedSkinName: 'Sacred Lotus Frame',
-    ),
-    const AchievementItem(
-      id: 'ruby_red',
-      title: 'Ruby Red',
-      iconEmoji: '🔥',
-      primaryColor: Color(0xFFB71C1C),
-      secondaryColor: Color(0xFFEF5350),
-      currentProgress: 0,
-      targetProgress: 8,
-      xpReward: 1000,
-      coinReward: 150,
-      unlockedSkinName: 'Agni Fire Aura',
-    ),
-  ];
+  String _selectedItemId = 'story_explorer';
 
-  late AchievementItem _selectedItem;
+  List<AchievementItem> _buildAchievements(GameState gameState) {
+    final profile = gameState.profile;
+    final analytics = gameState.database.analytics;
 
-  @override
-  void initState() {
-    super.initState();
-    _selectedItem = _achievements[0];
+    return [
+      AchievementItem(
+        id: 'story_explorer',
+        title: 'Story Explorer',
+        iconEmoji: '🦚',
+        primaryColor: const Color(0xFF0288D1),
+        secondaryColor: const Color(0xFF29B6F6),
+        currentProgress: profile.storiesCompleted,
+        targetProgress: 10,
+        xpReward: 500,
+        coinReward: 50,
+        unlockedSkinName: 'Ancient Scroll Skin',
+      ),
+      AchievementItem(
+        id: 'emerald_green',
+        title: 'Emerald Green',
+        iconEmoji: '🦚',
+        primaryColor: const Color(0xFF00897B),
+        secondaryColor: const Color(0xFF4DB6AC),
+        currentProgress: profile.storyStars['story_hare_tortoise'] ?? 0,
+        targetProgress: 3,
+        xpReward: 600,
+        coinReward: 60,
+        unlockedSkinName: 'Peacock Feather Banner',
+      ),
+      AchievementItem(
+        id: 'mythology_master',
+        title: 'Mythology Master',
+        iconEmoji: '🏹',
+        primaryColor: const Color(0xFFD84315),
+        secondaryColor: const Color(0xFFFF8A65),
+        currentProgress: profile.storyStars['story_rama_exile'] ?? 0,
+        targetProgress: 3,
+        xpReward: 750,
+        coinReward: 75,
+        unlockedSkinName: 'Golden Bow Emblem',
+      ),
+      AchievementItem(
+        id: 'saffron_master',
+        title: 'Saffron Master',
+        iconEmoji: '🕉️',
+        primaryColor: const Color(0xFFE65100),
+        secondaryColor: const Color(0xFFFFB74D),
+        currentProgress: analytics.quizzesAttempted,
+        targetProgress: 5,
+        xpReward: 800,
+        coinReward: 80,
+        unlockedSkinName: 'Royal Saffron Robe',
+      ),
+      AchievementItem(
+        id: 'puzzle_solved_gold',
+        title: 'Puzzle Solved',
+        iconEmoji: '❓',
+        primaryColor: const Color(0xFFF57F17),
+        secondaryColor: const Color(0xFFFFF176),
+        currentProgress: profile.storyStars.length,
+        targetProgress: 4,
+        xpReward: 400,
+        coinReward: 40,
+        unlockedSkinName: 'Riddle Master Avatar',
+      ),
+      AchievementItem(
+        id: 'puzzle_solved_cyan',
+        title: 'Puzzle Solved',
+        iconEmoji: '🧩',
+        primaryColor: const Color(0xFF0097A7),
+        secondaryColor: const Color(0xFF80DEEA),
+        currentProgress: analytics.totalQuizCorrect,
+        targetProgress: 15,
+        xpReward: 450,
+        coinReward: 45,
+        unlockedSkinName: 'Mandala Solver Skin',
+      ),
+      AchievementItem(
+        id: 'daily_streak',
+        title: 'Daily Streak',
+        iconEmoji: '🪷',
+        primaryColor: const Color(0xFFC2185B),
+        secondaryColor: const Color(0xFFF48FB1),
+        currentProgress: profile.dayStreak,
+        targetProgress: 7,
+        xpReward: 900,
+        coinReward: 100,
+        unlockedSkinName: 'Sacred Lotus Frame',
+      ),
+      AchievementItem(
+        id: 'ruby_red',
+        title: 'Ruby Red',
+        iconEmoji: '🔥',
+        primaryColor: const Color(0xFFB71C1C),
+        secondaryColor: const Color(0xFFEF5350),
+        currentProgress: profile.totalStars,
+        targetProgress: 20,
+        xpReward: 1000,
+        coinReward: 150,
+        unlockedSkinName: 'Agni Fire Aura',
+      ),
+    ];
   }
 
-  void _claimReward(GameState gameState) {
-    gameState.addXp(_selectedItem.xpReward);
-    gameState.addCoins(_selectedItem.coinReward);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '🎉 Claimed +${_selectedItem.xpReward} XP & +${_selectedItem.coinReward} Coins!',
+  void _claimReward(GameState gameState, AchievementItem item) {
+    final success = gameState.claimAchievement(item.id, item.xpReward, item.coinReward);
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '🎉 Claimed +${item.xpReward} XP & +${item.coinReward} Coins for ${item.title}!',
+          ),
+          backgroundColor: AppTheme.emerald,
         ),
-        backgroundColor: AppTheme.emerald,
-      ),
-    );
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final gameState = context.watch<GameState>();
+    final achievements = _buildAchievements(gameState);
+    final selectedItem = achievements.firstWhere(
+      (a) => a.id == _selectedItemId,
+      orElse: () => achievements.first,
+    );
+    final isClaimed = gameState.profile.claimedAchievementIds.contains(selectedItem.id);
+    final isCompleted = selectedItem.currentProgress >= selectedItem.targetProgress;
 
     return Scaffold(
       body: Stack(
@@ -205,15 +211,15 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       crossAxisSpacing: 10,
                       childAspectRatio: 0.65,
                     ),
-                    itemCount: _achievements.length,
+                    itemCount: achievements.length,
                     itemBuilder: (context, idx) {
-                      final item = _achievements[idx];
+                      final item = achievements[idx];
                       return AchievementMedallionWidget(
                         item: item,
-                        isSelected: item.id == _selectedItem.id,
+                        isSelected: item.id == selectedItem.id,
                         onTap: () {
                           setState(() {
-                            _selectedItem = item;
+                            _selectedItemId = item.id;
                           });
                         },
                       );
@@ -241,7 +247,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Description for ${_selectedItem.title}',
+                        selectedItem.title,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -274,7 +280,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                               const Icon(Icons.star_rounded, color: Color(0xFF00C853), size: 20),
                               const SizedBox(width: 4),
                               Text(
-                                '+${_selectedItem.xpReward} XP',
+                                '+${selectedItem.xpReward} XP',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 14,
@@ -288,7 +294,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                               const Text('🪙', style: TextStyle(fontSize: 14)),
                               const SizedBox(width: 4),
                               Text(
-                                '+${_selectedItem.coinReward} Coins',
+                                '+${selectedItem.coinReward} Coins',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 14,
@@ -308,7 +314,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                           const Text('📜', style: TextStyle(fontSize: 14)),
                           const SizedBox(width: 6),
                           Text(
-                            'Unlocked: ${_selectedItem.unlockedSkinName}',
+                            'Reward Skin: ${selectedItem.unlockedSkinName}',
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -322,24 +328,52 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       // Claim Reward Button
                       SizedBox(
                         width: double.infinity,
-                        height: 40,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF9F1C),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          onPressed: () => _claimReward(gameState),
-                          child: const Text(
-                            'Claim Reward! 🌟',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
+                        height: 42,
+                        child: isClaimed
+                            ? Container(
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8F5E9),
+                                  borderRadius: BorderRadius.circular(21),
+                                  border: Border.all(color: const Color(0xFFA5D6A7)),
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 18),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'Claimed ✓',
+                                      style: TextStyle(
+                                        color: Color(0xFF2E7D32),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isCompleted ? const Color(0xFFFF9F1C) : Colors.grey.shade400,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                onPressed: isCompleted
+                                    ? () => _claimReward(gameState, selectedItem)
+                                    : null,
+                                child: Text(
+                                  isCompleted
+                                      ? 'Claim Reward! 🌟'
+                                      : 'In Progress (${selectedItem.currentProgress}/${selectedItem.targetProgress})',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
                       ),
                     ],
                   ),

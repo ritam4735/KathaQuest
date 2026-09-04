@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../core/models/story_model.dart';
 import '../../state/game_state.dart';
 import '../../core/app_theme.dart';
+import '../../core/narration/narration_service.dart';
+import '../../core/haptic_feedback_helper.dart';
 import 'speech_bubble.dart';
 import 'tap_reaction_widget.dart';
 
@@ -22,11 +24,25 @@ class ComicReaderView extends StatefulWidget {
 
 class _ComicReaderViewState extends State<ComicReaderView> {
   int _currentPanelIndex = 0;
-  bool _isSpeakingNarration = false;
+  final NarrationService _narration = NarrationService.instance;
 
   ComicPanel get currentPanel => widget.step.panels[_currentPanelIndex];
 
+  @override
+  void initState() {
+    super.initState();
+    _narration.stop();
+  }
+
+  @override
+  void dispose() {
+    _narration.stop();
+    super.dispose();
+  }
+
   void _nextPanelOrStep() {
+    _narration.stop();
+    HapticHelper.light();
     if (_currentPanelIndex < widget.step.panels.length - 1) {
       setState(() {
         _currentPanelIndex++;
@@ -36,17 +52,42 @@ class _ComicReaderViewState extends State<ComicReaderView> {
     }
   }
 
-  void _playNarration() {
-    setState(() {
-      _isSpeakingNarration = true;
-    });
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) {
-        setState(() {
-          _isSpeakingNarration = false;
-        });
-      }
-    });
+  void _handleNarrationToggle(String text, String lang) {
+    HapticHelper.light();
+
+    switch (_narration.status) {
+      case NarrationStatus.idle:
+        _narration.speak(
+          text: text,
+          language: lang,
+          onComplete: () {
+            if (mounted) setState(() {});
+          },
+        );
+        break;
+      case NarrationStatus.loading:
+        // Ignored to prevent rapid duplicate triggers
+        break;
+      case NarrationStatus.playing:
+        _narration.pause();
+        break;
+      case NarrationStatus.paused:
+        _narration.resume();
+        break;
+    }
+    setState(() {});
+  }
+
+  void _replayNarration(String text, String lang) {
+    HapticHelper.light();
+    _narration.speak(
+      text: text,
+      language: lang,
+      onComplete: () {
+        if (mounted) setState(() {});
+      },
+    );
+    setState(() {});
   }
 
   @override
@@ -55,6 +96,8 @@ class _ComicReaderViewState extends State<ComicReaderView> {
     final isHindi = gameState.isHindi;
     final panel = currentPanel;
     final hasBgImage = panel.backgroundImage != null && panel.backgroundImage!.isNotEmpty;
+    final narrationText = isHindi ? panel.narrationRegional : panel.narrationEn;
+    final langCode = isHindi ? 'hi' : 'en';
 
     return Container(
       decoration: BoxDecoration(
@@ -95,18 +138,26 @@ class _ComicReaderViewState extends State<ComicReaderView> {
           // Main Interactive Layout
           Column(
             children: [
-              // Panel header / Chapter title
+              // Panel header / Chapter title & Narration HUD
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Scene Title Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withOpacity(0.92),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppTheme.primary, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
@@ -114,7 +165,7 @@ class _ComicReaderViewState extends State<ComicReaderView> {
                           Text(
                             widget.step.title,
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: AppTheme.textDark,
                             ),
@@ -122,17 +173,81 @@ class _ComicReaderViewState extends State<ComicReaderView> {
                         ],
                       ),
                     ),
-                    TextButton.icon(
-                      icon: const Icon(Icons.volume_up_rounded, size: 20),
-                      label: Text(_isSpeakingNarration ? 'Playing...' : 'Read to Me'),
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.9),
-                        foregroundColor: AppTheme.primaryDark,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      onPressed: _playNarration,
+
+                    // Read To Me & Replay Controls
+                    ValueListenableBuilder<NarrationStatus>(
+                      valueListenable: _narration.statusNotifier,
+                      builder: (context, status, _) {
+                        String label = isHindi ? 'सुनाओ' : 'Read to Me';
+                        IconData icon = Icons.volume_up_rounded;
+                        Color buttonColor = AppTheme.primaryDark;
+
+                        if (status == NarrationStatus.loading) {
+                          label = isHindi ? 'लोड हो रहा...' : 'Loading...';
+                          icon = Icons.hourglass_top_rounded;
+                          buttonColor = Colors.grey;
+                        } else if (status == NarrationStatus.playing) {
+                          label = isHindi ? 'रोकें' : 'Pause';
+                          icon = Icons.pause_circle_filled_rounded;
+                          buttonColor = AppTheme.primaryDark;
+                        } else if (status == NarrationStatus.paused) {
+                          label = isHindi ? 'जारी रखें' : 'Resume';
+                          icon = Icons.play_circle_fill_rounded;
+                          buttonColor = const Color(0xFF00A896);
+                        }
+
+                        final isLoading = status == NarrationStatus.loading;
+
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextButton.icon(
+                              icon: Icon(icon, size: 20, color: buttonColor),
+                              label: Text(
+                                label,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: buttonColor,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.95),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: status == NarrationStatus.playing
+                                        ? AppTheme.primary
+                                        : Colors.grey.shade300,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                              onPressed: isLoading
+                                  ? null
+                                  : () => _handleNarrationToggle(narrationText, langCode),
+                            ),
+                            if (status != NarrationStatus.idle) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.95),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.grey.shade300, width: 1.2),
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(Icons.replay_rounded, size: 18),
+                                  tooltip: isHindi ? 'फिर से सुनें' : 'Replay Narration',
+                                  color: AppTheme.textDark,
+                                  onPressed: () => _replayNarration(narrationText, langCode),
+                                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -154,21 +269,27 @@ class _ComicReaderViewState extends State<ComicReaderView> {
                           ),
 
                         // Dialogue bubbles overlay
-                        Positioned(
-                          left: 16,
-                          right: 16,
-                          top: 10,
-                          child: Column(
-                            children: panel.dialogues.map((d) {
-                              return SpeechBubble(
-                                speaker: d.speaker,
-                                avatar: d.avatar,
-                                text: isHindi ? d.textRegional : d.textEn,
-                                isLeft: d.isLeftAligned,
-                                isNarrating: _isSpeakingNarration,
-                              );
-                            }).toList(),
-                          ),
+                        ValueListenableBuilder<NarrationStatus>(
+                          valueListenable: _narration.statusNotifier,
+                          builder: (context, status, _) {
+                            final isPlaying = status == NarrationStatus.playing;
+                            return Positioned(
+                              left: 16,
+                              right: 16,
+                              top: 10,
+                              child: Column(
+                                children: panel.dialogues.map((d) {
+                                  return SpeechBubble(
+                                    speaker: d.speaker,
+                                    avatar: d.avatar,
+                                    text: isHindi ? d.textRegional : d.textEn,
+                                    isLeft: d.isLeftAligned,
+                                    isNarrating: isPlaying,
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     );
@@ -176,12 +297,12 @@ class _ComicReaderViewState extends State<ComicReaderView> {
                 ),
               ),
 
-              // Bottom Narration Box & Continue button
+              // Bottom Narration Box with Word-by-Word Synchronized Highlighting
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.96),
+                  color: Colors.white.withOpacity(0.97),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(28),
                     topRight: Radius.circular(28),
@@ -197,18 +318,23 @@ class _ComicReaderViewState extends State<ComicReaderView> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Narration text with bilingual support
-                    Text(
-                      isHindi ? panel.narrationRegional : panel.narrationEn,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        height: 1.4,
-                        fontWeight: FontWeight.w600,
-                        color: _isSpeakingNarration
-                            ? AppTheme.primaryDark
-                            : AppTheme.textDark,
-                      ),
+                    // Synchronized Word Highlighting Display
+                    ValueListenableBuilder<NarrationStatus>(
+                      valueListenable: _narration.statusNotifier,
+                      builder: (context, status, _) {
+                        return ValueListenableBuilder<int>(
+                          valueListenable: _narration.currentWordIndexNotifier,
+                          builder: (context, activeWordIdx, _) {
+                            final isSpeaking = status == NarrationStatus.playing ||
+                                status == NarrationStatus.paused;
+                            return _buildHighlightedNarrationText(
+                              narrationText,
+                              activeWordIdx,
+                              isSpeaking,
+                            );
+                          },
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -239,6 +365,69 @@ class _ComicReaderViewState extends State<ComicReaderView> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Builds narration text with smooth, child-friendly word-by-word highlighting.
+  Widget _buildHighlightedNarrationText(
+    String fullText,
+    int activeWordIdx,
+    bool isNarrating,
+  ) {
+    if (!isNarrating || activeWordIdx < 0) {
+      return Text(
+        fullText,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 16,
+          height: 1.45,
+          fontWeight: FontWeight.w600,
+          color: AppTheme.textDark,
+        ),
+      );
+    }
+
+    final words = fullText.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 6,
+      runSpacing: 6,
+      children: List.generate(words.length, (i) {
+        final isCurrent = i == activeWordIdx;
+        final isPast = i < activeWordIdx;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutQuad,
+          padding: EdgeInsets.symmetric(
+            horizontal: isCurrent ? 8 : 2,
+            vertical: isCurrent ? 3 : 1,
+          ),
+          decoration: BoxDecoration(
+            color: isCurrent
+                ? const Color(0xFFFFE082)
+                : (isPast ? const Color(0xFFF1F8E9) : Colors.transparent),
+            borderRadius: BorderRadius.circular(8),
+            border: isCurrent
+                ? Border.all(color: const Color(0xFFFFB300), width: 1.5)
+                : null,
+          ),
+          child: Text(
+            words[i],
+            style: TextStyle(
+              fontSize: isCurrent ? 17.5 : 16,
+              fontWeight: isCurrent
+                  ? FontWeight.w900
+                  : (isPast ? FontWeight.bold : FontWeight.w500),
+              color: isCurrent
+                  ? const Color(0xFF5D4037)
+                  : (isPast ? AppTheme.textDark : AppTheme.textDark.withOpacity(0.7)),
+            ),
+          ),
+        );
+      }),
     );
   }
 

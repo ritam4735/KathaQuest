@@ -1,20 +1,26 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/models/story_model.dart';
 import '../../core/audio_manager.dart';
 import '../../core/app_theme.dart';
+import '../../core/haptic_feedback_helper.dart';
+import '../../state/game_state.dart';
 import '../../widgets/animated_sprite_widget.dart';
 import '../../widgets/magical_speech_bubble.dart';
 import 'minigame_container.dart';
+import 'minigame_celebration_dialog.dart';
 
 class FinalSprintMiniGame extends StatefulWidget {
   final MiniGameStep step;
   final Function(int score) onComplete;
+  final VoidCallback? onPause;
 
   const FinalSprintMiniGame({
     super.key,
     required this.step,
     required this.onComplete,
+    this.onPause,
   });
 
   @override
@@ -45,6 +51,9 @@ class _FinalSprintMiniGameState extends State<FinalSprintMiniGame>
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
+      final isPaused = context.read<GameState>().isPaused;
+      if (isPaused) return; // Freeze timer countdown while paused
+
       setState(() {
         if (_remainingSeconds > 0) {
           _remainingSeconds--;
@@ -57,6 +66,8 @@ class _FinalSprintMiniGameState extends State<FinalSprintMiniGame>
 
   void _gameLoop() {
     if (_isGameOver || !mounted) return;
+    final isPaused = context.read<GameState>().isPaused;
+    if (isPaused) return; // Freeze hare sprint while paused
 
     setState(() {
       // Hare sprints desperately
@@ -70,6 +81,10 @@ class _FinalSprintMiniGameState extends State<FinalSprintMiniGame>
 
   void _handleCheerTap() {
     if (_isGameOver) return;
+    final isPaused = context.read<GameState>().isPaused;
+    if (isPaused) return;
+
+    HapticHelper.light();
     AudioManager().playFootstep();
     setState(() {
       _score += 5;
@@ -90,51 +105,14 @@ class _FinalSprintMiniGameState extends State<FinalSprintMiniGame>
     AudioManager().playFanfare();
     AudioManager().playCheer();
 
-    showDialog(
+    final gameState = context.read<GameState>();
+    MiniGameCelebrationDialog.show(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
-          '🏆 TIMO WON THE RACE!',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF0077B6),
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            AnimatedSpriteWidget(
-              animation: 'tortoise_win',
-              width: 100,
-              height: 100,
-            ),
-            SizedBox(height: 12),
-            Text(
-              'Slow and steady crossed the finish line first! What an incredible victory!',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-        actions: [
-          Center(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                widget.onComplete(_score);
-              },
-              child: const Text('Take Comprehension Quiz! 🎓'),
-            ),
-          ),
-        ],
-      ),
+      score: _score,
+      targetScore: widget.step.targetScore,
+      emoji: '🏆',
+      isHindi: gameState.isHindi,
+      onContinue: () => widget.onComplete(_score),
     );
   }
 
@@ -153,6 +131,7 @@ class _FinalSprintMiniGameState extends State<FinalSprintMiniGame>
       currentScore: _score,
       targetScore: widget.step.targetScore,
       remainingSeconds: _remainingSeconds,
+      onPause: widget.onPause,
       child: Stack(
         children: [
           // High-Res Finish line background
@@ -282,47 +261,47 @@ class _FinalSprintMiniGameState extends State<FinalSprintMiniGame>
 
                   // Giant Tactile Cheer Button
                   GestureDetector(
-                onTap: _handleCheerTap,
-                child: Container(
-                  width: 240,
-                  height: 108,
-                  decoration: AppTheme.tactileButtonDecoration(
-                    topColor: const Color(0xFFFF9F1C),
-                    bottomColor: const Color(0xFFE76F51),
-                    radius: 32,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text('📣 🐢 🏁', style: TextStyle(fontSize: 32)),
-                      SizedBox(height: 4),
-                      Text(
-                        'CHEER TIMO!',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
+                    onTap: _handleCheerTap,
+                    child: Container(
+                      width: 240,
+                      height: 108,
+                      decoration: AppTheme.tactileButtonDecoration(
+                        topColor: const Color(0xFFFF9F1C),
+                        bottomColor: const Color(0xFFE76F51),
+                        radius: 32,
                       ),
-                      Text(
-                        'TAP FAST TO FINISH!',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Text('📣 🐢 🏁', style: TextStyle(fontSize: 32)),
+                          SizedBox(height: 4),
+                          Text(
+                            'CHEER TIMO!',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          Text(
+                            'TAP FAST TO FINISH!',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
-    ],
-  ),
-);
+    );
   }
 }

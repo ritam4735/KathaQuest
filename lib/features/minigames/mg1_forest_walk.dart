@@ -1,21 +1,27 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/models/story_model.dart';
 import '../../core/audio_manager.dart';
 import '../../core/app_theme.dart';
+import '../../core/haptic_feedback_helper.dart';
+import '../../state/game_state.dart';
 import '../../widgets/animated_sprite_widget.dart';
 import '../../widgets/magical_speech_bubble.dart';
 import 'minigame_container.dart';
+import 'minigame_celebration_dialog.dart';
 
 class ForestWalkMiniGame extends StatefulWidget {
   final MiniGameStep step;
   final Function(int score) onComplete;
+  final VoidCallback? onPause;
 
   const ForestWalkMiniGame({
     super.key,
     required this.step,
     required this.onComplete,
+    this.onPause,
   });
 
   @override
@@ -50,6 +56,9 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
+      final isPaused = context.read<GameState>().isPaused;
+      if (isPaused) return; // Freeze countdown while paused
+
       setState(() {
         if (_remainingSeconds > 0) {
           _remainingSeconds--;
@@ -98,6 +107,8 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
 
   void _updateGame() {
     if (_isGameOver || !mounted) return;
+    final isPaused = context.read<GameState>().isPaused;
+    if (isPaused) return; // Freeze movement and spawns when paused
 
     if (_random.nextDouble() < 0.04) {
       _spawnItem();
@@ -107,7 +118,7 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
       for (var item in _items) {
         item.y += item.speed;
 
-        // Check catch by tortoise
+        // Check catch by tortoise strictly via physical collision
         if (item.y >= 0.72 && item.y <= 0.88 && !item.isCollected) {
           if ((item.x - _tortoiseX).abs() < 0.18) {
             _collectItem(item);
@@ -128,6 +139,7 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
     _score = max(0, _score + item.points);
 
     if (item.points > 0) {
+      HapticHelper.collect();
       AudioManager().playStar();
       _timoReaction = '+${item.points} ${item.emoji}';
     } else {
@@ -153,44 +165,14 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
 
     AudioManager().playCheer();
 
-    showDialog(
+    final gameState = context.read<GameState>();
+    MiniGameCelebrationDialog.show(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
-          '🎉 Forest Trail Complete!',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🐢', style: TextStyle(fontSize: 56)),
-            const SizedBox(height: 12),
-            Text(
-              'You guided Timo through the woods and collected $_score forest points!',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-        actions: [
-          Center(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                widget.onComplete(_score);
-              },
-              child: const Text('Continue Story! ➡️'),
-            ),
-          ),
-        ],
-      ),
+      score: _score,
+      targetScore: widget.step.targetScore,
+      emoji: '🐢',
+      isHindi: gameState.isHindi,
+      onContinue: () => widget.onComplete(_score),
     );
   }
 
@@ -198,6 +180,7 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
   void dispose() {
     _gameLoop.dispose();
     _timer?.cancel();
+    _reactionTimer?.cancel();
     super.dispose();
   }
 
@@ -209,18 +192,16 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
       currentScore: _score,
       targetScore: widget.step.targetScore,
       remainingSeconds: _remainingSeconds,
+      onPause: widget.onPause,
       child: LayoutBuilder(
         builder: (context, constraints) {
           return GestureDetector(
             onHorizontalDragUpdate: (details) {
+              final isPaused = context.read<GameState>().isPaused;
+              if (isPaused || _isGameOver) return;
+
               setState(() {
                 _tortoiseX = (_tortoiseX + details.delta.dx / constraints.maxWidth)
-                    .clamp(0.1, 0.9);
-              });
-            },
-            onTapDown: (details) {
-              setState(() {
-                _tortoiseX = (details.localPosition.dx / constraints.maxWidth)
                     .clamp(0.1, 0.9);
               });
             },
@@ -256,30 +237,27 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
                     ),
                   ),
 
-                  // Falling items
+                  // Falling items: strictly physical collision with tortoise, NO direct tap bypass
                   for (final item in _items)
                     Positioned(
                       left: (item.x * constraints.maxWidth) - 24,
                       top: item.y * constraints.maxHeight,
-                      child: GestureDetector(
-                        onTap: () => _collectItem(item),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.90),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            item.emoji,
-                            style: const TextStyle(fontSize: 28),
-                          ),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.90),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          item.emoji,
+                          style: const TextStyle(fontSize: 28),
                         ),
                       ),
                     ),
@@ -321,7 +299,7 @@ class _ForestWalkMiniGameState extends State<ForestWalkMiniGame>
                                   glowColor: const Color(0xFFFFD54F),
                                 )
                               : const MagicalFloatingBubble(
-                                  text: 'Drag Timo',
+                                  text: 'Drag Timo to catch',
                                   icon: '👈',
                                   fontSize: 11,
                                 ),

@@ -43,4 +43,27 @@ class WebAudioService implements AudioService {
       _playCandidate(paths, index + 1);
     }
   }
+
+  /// Preload all sound files by creating AudioElement objects and triggering load.
+  @override
+  Future<void> preloadAll(List<String> sfxNames) async {
+    for (final sfxName in sfxNames) {
+      final filename = '$sfxName.wav';
+      final candidatePaths = [
+        'assets/assets/audio/$filename',
+        'assets/audio/$filename',
+      ];
+
+      for (final path in candidatePaths) {
+        if (_cache.containsKey(path)) continue;
+        try {
+          final audio = html.AudioElement(path);
+          audio.volume = 0.85;
+          audio.preload = 'auto';
+          audio.load();
+          _cache[path] = audio;
+        } catch (_) {}
+      }
+    }
+  }
 }

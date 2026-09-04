@@ -25,9 +25,20 @@ class MainShellScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: screens,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey<int>(currentIndex),
+          child: screens[currentIndex],
+        ),
       ),
       bottomNavigationBar: const KathaBottomNavBar(),
     );
