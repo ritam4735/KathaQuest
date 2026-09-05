@@ -21,6 +21,7 @@ class GameState extends ChangeNotifier {
   // Active Story Session
   Story? _currentStory;
   int _currentStepIndex = 0;
+  int _currentPanelIndex = 0;
   int _currentMiniGameScore = 0;
   int _sessionStarsEarned = 3;
   int _quizCorrectCount = 0;
@@ -32,12 +33,18 @@ class GameState extends ChangeNotifier {
   String get selectedMapChapterId => _selectedMapChapterId;
   Story? get currentStory => _currentStory;
   int get currentStepIndex => _currentStepIndex;
+  int get currentPanelIndex => _currentPanelIndex;
   int get currentMiniGameScore => _currentMiniGameScore;
   int get sessionStarsEarned => _sessionStarsEarned;
   int get quizCorrectCount => _quizCorrectCount;
   bool get isPaused => _isPaused;
   SaveManager get saveManager => _saveManager;
   LocalDatabase get database => _saveManager.database;
+
+  bool get hasActiveStoryInProgress =>
+      _profile.lastActiveStoryId != null &&
+      _profile.activeStorySteps.containsKey(_profile.lastActiveStoryId);
+  String? get lastActiveStoryId => _profile.lastActiveStoryId;
 
   StoryStep? get currentStep {
     if (_currentStory == null) return null;
@@ -190,6 +197,14 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
+  int calculateStreakReward(int streak) {
+    if (streak <= 1) return 50;
+    if (streak == 2) return 75;
+    if (streak == 3) return 100;
+    if (streak < 7) return 150;
+    return 300; // 7+ days legendary streak reward
+  }
+
   bool claimDailyQuest() {
     final now = DateTime.now();
     final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
@@ -197,6 +212,7 @@ class GameState extends ChangeNotifier {
       return false; // Already claimed today
     }
     _profile.lastDailyQuestClaimedDate = todayStr;
+
     _profile.coins += 300;
     _profile.currentXp += 300;
     if (_profile.currentXp >= _profile.targetXp) {
@@ -222,9 +238,29 @@ class GameState extends ChangeNotifier {
   }
 
   // --- Story Session Flow ---
-  void startStory(Story story) {
+  void startStory(Story story, {bool resume = true}) {
     _currentStory = story;
-    _currentStepIndex = 0;
+    if (resume && _profile.activeStorySteps.containsKey(story.id)) {
+      final savedIndex = _profile.activeStorySteps[story.id] ?? 0;
+      _currentStepIndex = savedIndex.clamp(0, story.steps.length - 1);
+      final savedPanel = _profile.activeStoryPanels[story.id] ?? 0;
+      final step = story.steps[_currentStepIndex];
+      if (step is ComicStep && step.panels.isNotEmpty) {
+        _currentPanelIndex = savedPanel.clamp(0, step.panels.length - 1);
+      } else {
+        _currentPanelIndex = 0;
+      }
+    } else {
+      _currentStepIndex = 0;
+      _currentPanelIndex = 0;
+    }
+
+    _profile.lastActiveStoryId = story.id;
+    _profile.activeStorySteps[story.id] = _currentStepIndex;
+    _profile.activeStoryPanels[story.id] = _currentPanelIndex;
+    _saveManager.saveProfile(_profile);
+    _saveManager.forceSave();
+
     _currentMiniGameScore = 0;
     _sessionStarsEarned = 3;
     _quizCorrectCount = 0;
@@ -238,10 +274,41 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPanelIndex(int index) {
+    if (_currentPanelIndex != index) {
+      _currentPanelIndex = index;
+      if (_currentStory != null) {
+        _profile.activeStorySteps[_currentStory!.id] = _currentStepIndex;
+        _profile.activeStoryPanels[_currentStory!.id] = _currentPanelIndex;
+        _profile.lastActiveStoryId = _currentStory!.id;
+        _saveManager.saveProfile(_profile);
+        _saveManager.forceSave();
+      }
+      notifyListeners();
+    }
+  }
+
+  bool resumeActiveStory(List<Story> allStories) {
+    final storyId = _profile.lastActiveStoryId;
+    if (storyId == null) return false;
+    final match = allStories.where((s) => s.id == storyId);
+    if (match.isNotEmpty) {
+      startStory(match.first, resume: true);
+      return true;
+    }
+    return false;
+  }
+
   void nextStep() {
     if (_currentStory == null) return;
     if (_currentStepIndex < _currentStory!.steps.length - 1) {
       _currentStepIndex++;
+      _currentPanelIndex = 0;
+      _profile.activeStorySteps[_currentStory!.id] = _currentStepIndex;
+      _profile.activeStoryPanels[_currentStory!.id] = 0;
+      _profile.lastActiveStoryId = _currentStory!.id;
+      _saveManager.saveProfile(_profile);
+      _saveManager.forceSave();
       _audio.playPageTurn();
       notifyListeners();
     }
@@ -250,15 +317,36 @@ class GameState extends ChangeNotifier {
   void previousStep() {
     if (_currentStepIndex > 0) {
       _currentStepIndex--;
+      if (_currentStory != null) {
+        final step = _currentStory!.steps[_currentStepIndex];
+        if (step is ComicStep && step.panels.isNotEmpty) {
+          _currentPanelIndex = step.panels.length - 1;
+        } else {
+          _currentPanelIndex = 0;
+        }
+        _profile.activeStorySteps[_currentStory!.id] = _currentStepIndex;
+        _profile.activeStoryPanels[_currentStory!.id] = _currentPanelIndex;
+        _profile.lastActiveStoryId = _currentStory!.id;
+        _saveManager.saveProfile(_profile);
+        _saveManager.forceSave();
+      }
       _audio.playTap();
       notifyListeners();
     }
   }
 
-  void completeMiniGame(int score) {
+  void completeMiniGame(int score, [int stars = 3, String? gameId]) {
     _currentMiniGameScore += score;
+    final id = gameId ?? (currentStep is MiniGameStep ? (currentStep as MiniGameStep).id : 'minigame_step');
+    final coinsReward = (score / 5).round().clamp(5, 100);
+    _saveManager.recordMiniGameScore(
+      gameId: id,
+      score: score,
+      stars: stars,
+      coinsReward: coinsReward,
+    );
     addXp(score * 2);
-    addCoins((score / 5).round());
+    addCoins(coinsReward);
     _audio.playCheer();
     nextStep();
   }
@@ -290,12 +378,62 @@ class GameState extends ChangeNotifier {
   Future<void> finishStory({required String badge}) async {
     if (_currentStory == null || _hasFinishedCurrentSession) return;
     _hasFinishedCurrentSession = true;
+    final finishedId = _currentStory!.id;
+    _profile.activeStorySteps.remove(finishedId);
+    _profile.activeStoryPanels.remove(finishedId);
+    if (_profile.lastActiveStoryId == finishedId) {
+      _profile.lastActiveStoryId = null;
+    }
     await _saveManager.recordStoryCompletion(
-      storyId: _currentStory!.id,
+      storyId: finishedId,
       stars: _sessionStarsEarned,
       badge: badge,
     );
     _profile = _saveManager.profile;
+    notifyListeners();
+  }
+
+  void completeOnboarding({
+    required String playerName,
+    required String avatarEmoji,
+    required String avatarAsset,
+  }) {
+    _profile.playerName = playerName;
+    _profile.avatarEmoji = avatarEmoji;
+    _profile.avatarAsset = avatarAsset;
+    _profile.hasCompletedOnboarding = true;
+    _saveManager.saveProfile(_profile);
+    _audio.playFanfare();
+    notifyListeners();
+  }
+
+  bool purchaseItem({
+    required String itemId,
+    required int cost,
+  }) {
+    if (_profile.coins < cost || _profile.purchasedItemIds.contains(itemId)) {
+      _audio.playWrong();
+      return false;
+    }
+    _profile.coins -= cost;
+    _profile.purchasedItemIds.add(itemId);
+    _saveManager.saveProfile(_profile);
+    _audio.playFanfare();
+    notifyListeners();
+    return true;
+  }
+
+  void equipTitle(String title) {
+    _profile.currentTitle = title;
+    _saveManager.saveProfile(_profile);
+    _audio.playTap();
+    notifyListeners();
+  }
+
+  void equipBubbleTheme(String theme) {
+    _profile.currentBubbleTheme = theme;
+    _saveManager.saveProfile(_profile);
+    _audio.playTap();
     notifyListeners();
   }
 

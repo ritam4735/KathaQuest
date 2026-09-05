@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/game_state.dart';
+import '../core/haptic_feedback_helper.dart';
 
 class KathaBottomNavBar extends StatefulWidget {
   const KathaBottomNavBar({super.key});
@@ -18,8 +19,8 @@ class _KathaBottomNavBarState extends State<KathaBottomNavBar>
     _NavTab(icon: '🏠', label: 'Home'),
     _NavTab(icon: '📖', label: 'Library'),
     _NavTab(icon: '🧭', label: 'Map'),
-    _NavTab(icon: '🎁', label: 'Shop'),
-    _NavTab(icon: '👧', label: 'Profile'),
+    _NavTab(icon: '🛍️', label: 'Bazaar'),
+    _NavTab(icon: '🏆', label: 'Awards'),
   ];
 
   @override
@@ -61,6 +62,7 @@ class _KathaBottomNavBarState extends State<KathaBottomNavBar>
 
   void _onTabTap(int index, GameState gameState) {
     if (gameState.currentTabIndex == index) return;
+    HapticHelper.light();
     gameState.setTabIndex(index);
     _bounceControllers[index].forward(from: 0.0);
   }

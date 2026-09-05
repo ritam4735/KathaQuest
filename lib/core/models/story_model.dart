@@ -10,6 +10,7 @@ enum MiniGameType {
   raceBegins,
   rhythmSteps,
   finalSprint,
+  memoryMatch,
 }
 
 abstract class StoryStep {
@@ -50,6 +51,7 @@ class ComicCharacterTarget {
   final String soundEffect;
   final String speechBubbleOnTap;
   final String? spriteAnimation; // e.g. 'hare_idle', 'hare_run', 'tortoise_walk'
+  final bool? flipX;
 
   const ComicCharacterTarget({
     required this.characterId,
@@ -61,6 +63,7 @@ class ComicCharacterTarget {
     required this.soundEffect,
     required this.speechBubbleOnTap,
     this.spriteAnimation,
+    this.flipX,
   });
 }
 
@@ -175,6 +178,7 @@ class Story {
   final int estimatedMinutes;
   final int targetAgeMin;
   final int targetAgeMax;
+  final String? coverImage;
   final List<StoryStep> steps;
 
   const Story({
@@ -190,6 +194,8 @@ class Story {
     required this.estimatedMinutes,
     required this.targetAgeMin,
     required this.targetAgeMax,
+    this.coverImage,
     required this.steps,
   });
 }
+

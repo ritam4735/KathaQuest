@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_theme.dart';
+import '../core/models/story_model.dart';
 import '../core/page_transitions.dart';
 import '../data/sample_stories.dart';
 import '../state/game_state.dart';
@@ -53,8 +54,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     super.dispose();
   }
 
-  void _openStory(BuildContext context, GameState gameState, dynamic story) {
-    gameState.startStory(story);
+  void _openStory(BuildContext context, GameState gameState, dynamic story, {bool? resume}) {
+    final shouldResume = resume ?? gameState.profile.activeStorySteps.containsKey(story.id);
+    gameState.startStory(story, resume: shouldResume);
     Navigator.of(context).push(
       StoryLaunchPageRoute(page: const StoryScreen()),
     );
@@ -63,6 +65,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final gameState = context.watch<GameState>();
+    final hasActive = gameState.hasActiveStoryInProgress;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F0DF),
@@ -81,12 +84,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                   _buildStaggered(0, child: _buildGreetingBanner(gameState)),
                   const SizedBox(height: 16),
 
+                  // RESUME ADVENTURE CARD if active story exists!
+                  if (hasActive) ...[
+                    _buildStaggered(1, child: _buildResumeAdventureCard(gameState)),
+                    const SizedBox(height: 20),
+                  ],
+
                   // FEATURED QUEST CARD with pulsing glow
-                  _buildStaggered(1, child: _buildFeaturedQuestCard(gameState)),
+                  _buildStaggered(hasActive ? 2 : 1, child: _buildFeaturedQuestCard(gameState)),
                   const SizedBox(height: 20),
 
                   // RECENTLY PLAYED SECTION
-                  _buildStaggered(2, child: _buildRecentlyPlayedSection(gameState)),
+                  _buildStaggered(hasActive ? 3 : 2, child: _buildRecentlyPlayedSection(gameState)),
                   const SizedBox(height: 20),
 
                   // DAILY QUEST
@@ -120,13 +129,17 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
-          Text(
-            '${gameState.greeting}, ${gameState.profile.playerName}! 👋',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: AppTheme.textDark,
-              fontFamily: 'serif',
+          Expanded(
+            child: Text(
+              '${gameState.greeting}, ${gameState.profile.playerName}! 👋',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: AppTheme.textDark,
+                fontFamily: 'serif',
+              ),
             ),
           ),
         ],
@@ -134,7 +147,186 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     );
   }
 
+  Widget _buildResumeAdventureCard(GameState gameState) {
+    final activeId = gameState.lastActiveStoryId;
+    if (activeId == null) return const SizedBox.shrink();
+    final allStories = SampleStories.getAllStories();
+    final match = allStories.where((s) => s.id == activeId);
+    if (match.isEmpty) return const SizedBox.shrink();
+    final story = match.first;
+    final isHindi = gameState.isHindi;
+    final title = isHindi ? story.titleRegional : story.titleEn;
+    final coverPath = story.coverImage ?? 'assets/images/backgrounds_for_hare_tortoise_story/1.png';
+    final stepIndex = gameState.profile.activeStorySteps[story.id] ?? 0;
+    final panelIndex = gameState.profile.activeStoryPanels[story.id] ?? 0;
+    final totalSteps = story.steps.length;
+    final progress = ((stepIndex + 1) / totalSteps).clamp(0.0, 1.0);
+
+    String locationLabel;
+    if (stepIndex < story.steps.length) {
+      final currentStep = story.steps[stepIndex];
+      if (currentStep.type == StoryStepType.comic) {
+        final totalPanels = (currentStep as ComicStep).panels.length;
+        locationLabel = isHindi
+            ? 'चित्रकथा पैनल ${panelIndex + 1}/$totalPanels • चरण ${stepIndex + 1}/$totalSteps'
+            : 'Comic Panel ${panelIndex + 1}/$totalPanels • Step ${stepIndex + 1}/$totalSteps';
+      } else if (currentStep.type == StoryStepType.miniGame) {
+        locationLabel = isHindi
+            ? 'मिनी-गेम • चरण ${stepIndex + 1}/$totalSteps'
+            : 'Mini Game • Step ${stepIndex + 1}/$totalSteps';
+      } else if (currentStep.type == StoryStepType.quiz) {
+        locationLabel = isHindi
+            ? 'क्विज़ • चरण ${stepIndex + 1}/$totalSteps'
+            : 'Quiz • Step ${stepIndex + 1}/$totalSteps';
+      } else {
+        locationLabel = isHindi
+            ? 'इनाम • चरण ${stepIndex + 1}/$totalSteps'
+            : 'Reward • Step ${stepIndex + 1}/$totalSteps';
+      }
+    } else {
+      locationLabel = isHindi ? 'चरण ${stepIndex + 1}/$totalSteps' : 'Step ${stepIndex + 1}/$totalSteps';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFDF7),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFF2EC4B6), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2EC4B6).withOpacity(0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Banner Tag
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2EC4B6), Color(0xFF0F9F90)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      isHindi ? 'कहानी जारी रखें' : 'RESUME ADVENTURE',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${(progress * 100).toInt()}% ${isHindi ? 'पूरा' : 'Complete'}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F9F90),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Image.asset(
+                  coverPath,
+                  width: 78,
+                  height: 78,
+                  fit: BoxFit.cover,
+                  errorBuilder: (ctx, err, stack) => Container(
+                    width: 78,
+                    height: 78,
+                    color: const Color(0xFFEADBBE),
+                    child: Center(
+                      child: Text(story.coverEmoji, style: const TextStyle(fontSize: 32)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.textDark,
+                        fontFamily: 'serif',
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      locationLabel,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF6D4C41),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 7,
+                        backgroundColor: const Color(0xFFEADBBE),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2EC4B6)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          TactilePillButton(
+            text: isHindi ? 'कहानी जारी रखें ➔' : 'Resume Quest ➔',
+            height: 42,
+            fontSize: 15,
+            variant: TactilePillVariant.emerald,
+            onTap: () => _openStory(context, gameState, story, resume: true),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFeaturedQuestCard(GameState gameState) {
+    final featuredStory = SampleStories.hareAndTortoise;
+    final isHindi = gameState.isHindi;
+    final title = isHindi ? featuredStory.titleRegional : featuredStory.titleEn;
+    final coverPath = featuredStory.coverImage ?? 'assets/images/backgrounds_for_hare_tortoise_story/1.png';
+    final hasProgress = gameState.profile.activeStorySteps.containsKey(featuredStory.id);
+    final currentStep = gameState.profile.activeStorySteps[featuredStory.id] ?? 0;
+    final totalSteps = featuredStory.steps.length;
+    final progress = hasProgress ? ((currentStep + 1) / totalSteps).clamp(0.0, 1.0) : 0.1;
+
     return AnimatedBuilder(
       animation: _glowAnimation,
       builder: (context, child) {
@@ -170,9 +362,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
               child: Container(
                 width: 130,
                 height: 130,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage('assets/images/backgrounds_for_hare_tortoise_story/1.png'),
+                    image: AssetImage(coverPath),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -185,9 +377,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Featured Quest:',
-                    style: TextStyle(
+                  Text(
+                    isHindi ? 'विशेष खोज:' : 'Featured Quest:',
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.textMedium,
@@ -195,9 +387,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                     ),
                   ),
                   const SizedBox(height: 2),
-                  const Text(
-                    "Hare & Tortoise",
-                    style: TextStyle(
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                       color: AppTheme.textDark,
@@ -207,9 +401,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                   const SizedBox(height: 8),
 
                   // Progress Bar
-                  const Text(
-                    'Ready to Play! 🐢⚡🐰',
-                    style: TextStyle(
+                  Text(
+                    hasProgress
+                        ? (isHindi
+                            ? 'प्रगति सहेजी गई! चरण ${currentStep + 1}/$totalSteps'
+                            : 'Progress Saved! Step ${currentStep + 1}/$totalSteps')
+                        : (isHindi
+                            ? 'खेलने के लिए तैयार! ${featuredStory.coverEmoji}'
+                            : 'Ready to Play! ${featuredStory.coverEmoji}'),
+                    style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textLight,
                       fontWeight: FontWeight.bold,
@@ -219,7 +419,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0.0, end: 0.1),
+                      tween: Tween(begin: 0.0, end: progress),
                       duration: const Duration(milliseconds: 800),
                       curve: Curves.easeOutCubic,
                       builder: (context, value, _) {
@@ -227,8 +427,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                           value: value,
                           minHeight: 6,
                           backgroundColor: const Color(0xFFEADBBE),
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Color(0xFF2EC4B6),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            hasProgress ? const Color(0xFF2EC4B6) : const Color(0xFFFFB300),
                           ),
                         );
                       },
@@ -238,14 +438,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
 
                   // Play Now 3D Button
                   TactilePillButton(
-                    text: 'Play Now',
+                    text: hasProgress
+                        ? (isHindi ? 'जारी रखें' : 'Resume Quest')
+                        : (isHindi ? 'शुरू करें' : 'Play Now'),
                     height: 42,
                     fontSize: 15,
-                    variant: TactilePillVariant.gold,
+                    variant: hasProgress ? TactilePillVariant.emerald : TactilePillVariant.gold,
                     onTap: () => _openStory(
                       context,
                       gameState,
-                      SampleStories.hareAndTortoise,
+                      featuredStory,
                     ),
                   ),
                 ],
@@ -328,11 +530,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                     imageAsset = 'assets/images/story_vikram_betaal.jpg';
                   }
                   final stars = gameState.profile.storyStars[story.id] ?? 0;
+                  final hasProgress = gameState.profile.activeStorySteps.containsKey(story.id);
 
                   return _buildStoryCard(
                     title: title,
                     imageAsset: imageAsset,
                     stars: stars,
+                    isInProgress: hasProgress,
                     onTap: () => _openStory(context, gameState, story),
                   );
                 },
@@ -478,6 +682,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     required String imageAsset,
     required VoidCallback onTap,
     int stars = 0,
+    bool isInProgress = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(right: 14.0),
@@ -527,6 +732,29 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+                    if (isInProgress)
+                      Positioned(
+                        bottom: 4,
+                        left: 4,
+                        right: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2EC4B6),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'RESUME',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ),

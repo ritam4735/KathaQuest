@@ -35,8 +35,9 @@ class _LibraryScreenState extends State<LibraryScreen>
     super.dispose();
   }
 
-  void _openStory(BuildContext context, GameState gameState, Story story) {
-    gameState.startStory(story);
+  void _openStory(BuildContext context, GameState gameState, Story story, {bool? resume}) {
+    final shouldResume = resume ?? gameState.profile.activeStorySteps.containsKey(story.id);
+    gameState.startStory(story, resume: shouldResume);
     Navigator.of(context).push(
       StoryLaunchPageRoute(page: const StoryScreen()),
     );
@@ -302,12 +303,19 @@ class _LibraryScreenState extends State<LibraryScreen>
     required String synopsis,
     required bool isHindi,
   }) {
+    final hasProgress = gameState.profile.activeStorySteps.containsKey(story.id);
+    final currentStep = gameState.profile.activeStorySteps[story.id] ?? 0;
+    final currentPanel = gameState.profile.activeStoryPanels[story.id] ?? 0;
+    final totalSteps = story.steps.length;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Container(
         decoration: AppTheme.kidCardDecoration(
           color: Colors.white,
-          borderColor: isUnlocked ? AppTheme.primary : Colors.grey.shade300,
+          borderColor: isUnlocked
+              ? (hasProgress ? const Color(0xFF2EC4B6) : AppTheme.primary)
+              : Colors.grey.shade300,
           radius: 24,
         ),
         child: Stack(
@@ -327,20 +335,51 @@ class _LibraryScreenState extends State<LibraryScreen>
                         color: const Color(0xFFFFF9E6),
                         border: Border.all(
                           color: isUnlocked
-                              ? AppTheme.saffron
+                              ? (hasProgress ? const Color(0xFF2EC4B6) : AppTheme.saffron)
                               : Colors.grey.shade300,
                           width: 1.5,
                         ),
                       ),
-                      child: Image.asset(
-                        story.id == 'story_hare_tortoise'
-                            ? 'assets/images/backgrounds_for_hare_tortoise_story/1.png'
-                            : story.id == 'story_rama_exile'
-                                ? 'assets/images/story_rama_exile.jpg'
-                                : story.id == 'story_panchatantra'
-                                    ? 'assets/images/story_panchatantra.jpg'
-                                    : 'assets/images/story_vikram_betaal.jpg',
-                        fit: BoxFit.cover,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.asset(
+                            story.coverImage ?? 'assets/images/splash_hero_art.jpg',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: const Color(0xFFFFF4E0),
+                              child: Center(
+                                child: Text(
+                                  story.coverEmoji,
+                                  style: const TextStyle(fontSize: 32),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (hasProgress && isUnlocked)
+                            Positioned(
+                              bottom: 4,
+                              left: 4,
+                              right: 4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2EC4B6),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'RESUME',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -390,6 +429,34 @@ class _LibraryScreenState extends State<LibraryScreen>
                             height: 1.3,
                           ),
                         ),
+                        if (hasProgress && isUnlocked) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0F2F1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFF80CBC4), width: 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.play_circle_filled_rounded, size: 12, color: Color(0xFF00796B)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isHindi
+                                      ? 'चरण ${currentStep + 1}/$totalSteps (पैनल ${currentPanel + 1})'
+                                      : 'Step ${currentStep + 1}/$totalSteps (Panel ${currentPanel + 1})',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF004D40),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 10),
 
                         // Action Row
@@ -407,7 +474,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                             if (isUnlocked)
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primary,
+                                  backgroundColor: hasProgress ? const Color(0xFF2EC4B6) : AppTheme.primary,
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 16, vertical: 8),
                                   shape: RoundedRectangleBorder(
@@ -416,9 +483,11 @@ class _LibraryScreenState extends State<LibraryScreen>
                                 ),
                                 onPressed: () => _openStory(context, gameState, story),
                                 child: Text(
-                                  starsEarned > 0
-                                      ? (isHindi ? 'फिर खेलें' : 'Replay')
-                                      : (isHindi ? 'शुरू करें!' : 'Play!'),
+                                  hasProgress
+                                      ? (isHindi ? 'जारी रखें' : 'Resume')
+                                      : (starsEarned > 0
+                                          ? (isHindi ? 'फिर खेलें' : 'Replay')
+                                          : (isHindi ? 'शुरू करें!' : 'Play!')),
                                   style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold),

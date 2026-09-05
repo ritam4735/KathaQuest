@@ -111,17 +111,21 @@ class AudioManager extends ChangeNotifier {
 
   double get effectiveSfxVolume => _masterVolume * _sfxVolume;
 
-  // Play named SFX with real Web Audio / AudioElement playback
+  // Play named SFX with real Web Audio / AudioElement / native Mobile playback
   void playSfx(String sfxName) {
     if (!_isSfxEnabled) return;
 
     if (kDebugMode) {
-      print('🎵 [SFX] Playing sound effect: $sfxName');
+      print('🎵 [SFX] Playing sound effect: $sfxName (vol: $effectiveSfxVolume)');
     }
 
     try {
-      AudioService.instance.playSound(sfxName);
-    } catch (_) {}
+      AudioService.instance.playSound(sfxName, volume: effectiveSfxVolume);
+    } catch (e) {
+      if (kDebugMode) {
+        print('⚠️ [AudioManager] Failed to play $sfxName: $e');
+      }
+    }
   }
 
   // --- Existing convenience methods ---

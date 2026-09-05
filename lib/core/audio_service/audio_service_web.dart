@@ -7,7 +7,7 @@ class WebAudioService implements AudioService {
   final Map<String, html.AudioElement> _cache = {};
 
   @override
-  void playSound(String sfxName) {
+  void playSound(String sfxName, {double? volume}) {
     try {
       final filename = '$sfxName.wav';
       final candidatePaths = [
@@ -15,11 +15,11 @@ class WebAudioService implements AudioService {
         'assets/audio/$filename',
       ];
 
-      _playCandidate(candidatePaths, 0);
+      _playCandidate(candidatePaths, 0, (volume ?? 0.85).clamp(0.0, 1.0));
     } catch (_) {}
   }
 
-  void _playCandidate(List<String> paths, int index) {
+  void _playCandidate(List<String> paths, int index, double volume) {
     if (index >= paths.length) return;
 
     try {
@@ -28,19 +28,20 @@ class WebAudioService implements AudioService {
       var audio = _cache[path];
       if (audio == null) {
         audio = html.AudioElement(path);
-        audio.volume = 0.85;
+        audio.volume = volume;
         _cache[path] = audio;
       } else {
+        audio.volume = volume;
         audio.currentTime = 0;
       }
 
       final playPromise = audio.play();
       playPromise.catchError((_) {
         // Fall back to alternate asset path if first path 404s
-        _playCandidate(paths, index + 1);
+        _playCandidate(paths, index + 1, volume);
       });
     } catch (_) {
-      _playCandidate(paths, index + 1);
+      _playCandidate(paths, index + 1, volume);
     }
   }
 

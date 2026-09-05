@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 class UserProfile {
-  static const int currentSaveVersion = 3;
+  static const int currentSaveVersion = 4;
 
   String playerName;
   String avatarEmoji;
@@ -26,7 +26,23 @@ class UserProfile {
   String selectedLanguage; // 'en' or 'hi'
   double narrationSpeed;
 
-  // New fields for enhanced data handling
+  // Mini-Game & Arcade Persistence (v4)
+  Map<String, int> miniGameHighScores; // gameId -> high score
+  Map<String, int> miniGameStars; // gameId -> stars earned (1-3)
+  Map<String, bool> miniGameCompleted; // gameId -> true
+  int totalMiniGamePoints;
+  List<String> unlockedCollectibles;
+
+  // Onboarding, Active Progress & Bazaar Economy
+  bool hasCompletedOnboarding;
+  Map<String, int> activeStorySteps; // storyId -> stepIndex
+  Map<String, int> activeStoryPanels; // storyId -> panelIndex
+  String? lastActiveStoryId; // ID of active in-progress story
+  List<String> purchasedItemIds;
+  String currentTitle;
+  String currentBubbleTheme;
+
+  // Timestamps & versioning
   int saveVersion;
   Map<String, int> lastPlayedAt; // storyId -> epoch milliseconds
   int createdAt; // epoch milliseconds
@@ -55,6 +71,18 @@ class UserProfile {
     this.isNarrationEnabled = true,
     this.selectedLanguage = 'en',
     this.narrationSpeed = 1.0,
+    Map<String, int>? miniGameHighScores,
+    Map<String, int>? miniGameStars,
+    Map<String, bool>? miniGameCompleted,
+    this.totalMiniGamePoints = 0,
+    List<String>? unlockedCollectibles,
+    this.hasCompletedOnboarding = false,
+    Map<String, int>? activeStorySteps,
+    Map<String, int>? activeStoryPanels,
+    this.lastActiveStoryId,
+    List<String>? purchasedItemIds,
+    this.currentTitle = 'Story Seeker',
+    this.currentBubbleTheme = 'classic',
     this.saveVersion = currentSaveVersion,
     Map<String, int>? lastPlayedAt,
     int? createdAt,
@@ -69,6 +97,13 @@ class UserProfile {
           'Daily Streak',
         ],
         claimedAchievementIds = claimedAchievementIds ?? [],
+        miniGameHighScores = miniGameHighScores ?? {},
+        miniGameStars = miniGameStars ?? {},
+        miniGameCompleted = miniGameCompleted ?? {},
+        unlockedCollectibles = unlockedCollectibles ?? ['golden_star', 'emerald_clover'],
+        activeStorySteps = activeStorySteps ?? {},
+        activeStoryPanels = activeStoryPanels ?? {},
+        purchasedItemIds = purchasedItemIds ?? ['avatar_timo', 'title_seeker', 'bubble_parchment'],
         lastPlayedAt = lastPlayedAt ?? {},
         createdAt = createdAt ?? DateTime.now().millisecondsSinceEpoch,
         lastModifiedAt = lastModifiedAt ?? DateTime.now().millisecondsSinceEpoch;
@@ -97,6 +132,18 @@ class UserProfile {
       'isNarrationEnabled': isNarrationEnabled,
       'selectedLanguage': selectedLanguage,
       'narrationSpeed': narrationSpeed,
+      'miniGameHighScores': miniGameHighScores,
+      'miniGameStars': miniGameStars,
+      'miniGameCompleted': miniGameCompleted,
+      'totalMiniGamePoints': totalMiniGamePoints,
+      'unlockedCollectibles': unlockedCollectibles,
+      'hasCompletedOnboarding': hasCompletedOnboarding,
+      'activeStorySteps': activeStorySteps,
+      'activeStoryPanels': activeStoryPanels,
+      'lastActiveStoryId': lastActiveStoryId,
+      'purchasedItemIds': purchasedItemIds,
+      'currentTitle': currentTitle,
+      'currentBubbleTheme': currentBubbleTheme,
       'saveVersion': saveVersion,
       'lastPlayedAt': lastPlayedAt,
       'createdAt': createdAt,
@@ -128,6 +175,18 @@ class UserProfile {
       isNarrationEnabled: map['isNarrationEnabled'] ?? true,
       selectedLanguage: map['selectedLanguage'] ?? 'en',
       narrationSpeed: (map['narrationSpeed'] as num?)?.toDouble() ?? 1.0,
+      miniGameHighScores: Map<String, int>.from(map['miniGameHighScores'] ?? {}),
+      miniGameStars: Map<String, int>.from(map['miniGameStars'] ?? {}),
+      miniGameCompleted: Map<String, bool>.from(map['miniGameCompleted'] ?? {}),
+      totalMiniGamePoints: map['totalMiniGamePoints'] ?? 0,
+      unlockedCollectibles: List<String>.from(map['unlockedCollectibles'] ?? ['golden_star', 'emerald_clover']),
+      hasCompletedOnboarding: map['hasCompletedOnboarding'] ?? false,
+      activeStorySteps: Map<String, int>.from(map['activeStorySteps'] ?? {}),
+      activeStoryPanels: Map<String, int>.from(map['activeStoryPanels'] ?? {}),
+      lastActiveStoryId: map['lastActiveStoryId'] as String?,
+      purchasedItemIds: List<String>.from(map['purchasedItemIds'] ?? ['avatar_timo', 'title_seeker', 'bubble_parchment']),
+      currentTitle: map['currentTitle'] ?? 'Story Seeker',
+      currentBubbleTheme: map['currentBubbleTheme'] ?? 'classic',
       saveVersion: map['saveVersion'] ?? 1,
       lastPlayedAt: Map<String, int>.from(map['lastPlayedAt'] ?? {}),
       createdAt: map['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
@@ -151,5 +210,32 @@ class UserProfile {
     final entries = lastPlayedAt.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     return entries.map((e) => e.key).toList();
+  }
+
+  /// Record a mini-game play session result.
+  bool recordMiniGameResult({
+    required String gameId,
+    required int score,
+    required int stars,
+    int coinsReward = 0,
+  }) {
+    bool isNewHighScore = false;
+    final currentHigh = miniGameHighScores[gameId] ?? 0;
+    if (score > currentHigh) {
+      miniGameHighScores[gameId] = score;
+      isNewHighScore = true;
+    }
+
+    final currentStars = miniGameStars[gameId] ?? 0;
+    if (stars > currentStars) {
+      miniGameStars[gameId] = stars;
+      totalStars += (stars - currentStars);
+    }
+
+    miniGameCompleted[gameId] = true;
+    totalMiniGamePoints += score;
+    coins += coinsReward;
+    lastModifiedAt = DateTime.now().millisecondsSinceEpoch;
+    return isNewHighScore;
   }
 }

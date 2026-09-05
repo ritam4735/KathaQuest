@@ -35,6 +35,7 @@ class AppTheme {
   static const Color surface = parchmentLight;
   static const Color surfaceMuted = parchmentDark;
   static const Color sunshine = templeGold;
+  static const Color gold = templeGold;
   static const Color accent = saffronDark;
 
   // Gradients

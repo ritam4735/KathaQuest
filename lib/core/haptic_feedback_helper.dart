@@ -23,10 +23,24 @@ class HapticHelper {
     } catch (_) {}
   }
 
+  /// Medium impact for interactive elements and mascot taps.
+  static void medium() {
+    try {
+      HapticFeedback.mediumImpact();
+    } catch (_) {}
+  }
+
   /// Celebratory vibration on completing steps, earning stars, or badges.
   static void success() {
     try {
       HapticFeedback.mediumImpact();
+    } catch (_) {}
+  }
+
+  /// Warning / damage impact on obstacle collision or game over.
+  static void warning() {
+    try {
+      HapticFeedback.heavyImpact();
     } catch (_) {}
   }
 }

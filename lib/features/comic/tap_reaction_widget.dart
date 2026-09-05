@@ -107,6 +107,7 @@ class _TapReactionWidgetState extends State<TapReactionWidget>
                               animation: widget.target.spriteAnimation!,
                               width: 85,
                               height: 85,
+                              flipX: widget.target.flipX ?? (widget.target.posX < 0.5),
                             ),
                           ),
                         )

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/app_theme.dart';
 import '../state/game_state.dart';
 import '../widgets/achievement_medallion.dart';
+import 'parent_corner_screen.dart';
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -163,7 +164,62 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFFFE082).withOpacity(0.4), width: 1),
+                        ),
+                        child: Text(
+                          '${gameState.profile.totalStars} ⭐',
+                          style: const TextStyle(
+                            color: Color(0xFFFFE082),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const ParentCornerScreen()),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.45),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFFFE082).withOpacity(0.6), width: 1.2),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.lock_outline_rounded, color: Color(0xFFFFE082), size: 14),
+                              SizedBox(width: 5),
+                              Text(
+                                'Parents',
+                                style: TextStyle(
+                                  color: Color(0xFFFFE082),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
 
                 // Top Header Title (Matching Screenshot 5)
                 const Text(

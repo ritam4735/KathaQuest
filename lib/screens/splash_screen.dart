@@ -2,8 +2,12 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/audio_manager.dart';
+import '../core/page_transitions.dart';
+import '../data/sample_stories.dart';
 import '../state/game_state.dart';
 import 'main_shell_screen.dart';
+import 'onboarding_screen.dart';
+import 'story_screen.dart';
 import 'splash/layers/hero_background_layer.dart';
 import 'splash/layers/cloud_layer.dart';
 import 'splash/layers/particle_layer.dart';
@@ -163,21 +167,53 @@ class _HeroSplashScreenState extends State<HeroSplashScreen>
     // 2. Trigger Tap Feedback Transition (light burst, camera push, fade)
     _tapTransitionController.forward().then((_) {
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 650),
-          pageBuilder: (context, anim1, anim2) => const MainShellScreen(),
-          transitionsBuilder: (context, anim1, anim2, child) {
-            return FadeTransition(
-              opacity: CurvedAnimation(
-                parent: anim1,
-                curve: Curves.easeInOutCubic,
-              ),
-              child: child,
-            );
-          },
-        ),
-      );
+      final gameState = Provider.of<GameState>(context, listen: false);
+      final hasCompleted = gameState.profile.hasCompletedOnboarding;
+      final nav = Navigator.of(context);
+
+      if (!hasCompleted) {
+        nav.pushReplacement(
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 650),
+            pageBuilder: (context, anim1, anim2) => const OnboardingScreen(),
+            transitionsBuilder: (context, anim1, anim2, child) {
+              return FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: anim1,
+                  curve: Curves.easeInOutCubic,
+                ),
+                child: child,
+              );
+            },
+          ),
+        );
+      } else {
+        final resumed = gameState.resumeActiveStory(SampleStories.getAllStories());
+        if (resumed) {
+          nav.pushReplacement(
+            MaterialPageRoute(builder: (_) => const MainShellScreen()),
+          );
+          nav.push(
+            StoryLaunchPageRoute(page: const StoryScreen()),
+          );
+        } else {
+          nav.pushReplacement(
+            PageRouteBuilder(
+              transitionDuration: const Duration(milliseconds: 650),
+              pageBuilder: (context, anim1, anim2) => const MainShellScreen(),
+              transitionsBuilder: (context, anim1, anim2, child) {
+                return FadeTransition(
+                  opacity: CurvedAnimation(
+                    parent: anim1,
+                    curve: Curves.easeInOutCubic,
+                  ),
+                  child: child,
+                );
+              },
+            ),
+          );
+        }
+      }
     });
   }
 

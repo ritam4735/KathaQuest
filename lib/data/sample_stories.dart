@@ -17,6 +17,7 @@ class SampleStories {
     estimatedMinutes: 6,
     targetAgeMin: 5,
     targetAgeMax: 12,
+    coverImage: 'assets/images/story_rama_exile.jpg',
     steps: [
       // STEP 1: Comic Intro
       ComicStep(
@@ -66,6 +67,42 @@ class SampleStories {
                 tapReactionType: 'munch_leaf',
                 soundEffect: 'star_twinkle',
                 speechBubbleOnTap: 'Such divine peace in the woods! 🪷',
+              ),
+            ],
+          ),
+          ComicPanel(
+            panelId: 'rama_panel_1_hermitage',
+            backgroundTheme: 'apple_tree_meadow',
+            narrationEn:
+                'Soon they reached the serene hermitage of the revered sages, where wild deer rested beside burning holy fires in peace.',
+            narrationRegional:
+                'शीघ्र ही वे ऋषि-मुनियों के शांत आश्रम में पहुँचे, जहाँ हवन कुंड के निकट हिरण निर्भय होकर विचरण कर रहे थे।',
+            dialogues: [
+              ComicDialogue(
+                speaker: 'Lakshmana',
+                avatar: '🛡️',
+                textEn: 'Brother, the hermitage is near. The sages offer their sacred blessings for our journey.',
+                textRegional: 'भ्राता, आश्रम निकट ही है। ऋषिगण हमारी रक्षा के लिए आशीर्वाद दे रहे हैं।',
+                isLeftAligned: true,
+              ),
+              ComicDialogue(
+                speaker: 'Lord Rama',
+                avatar: '🏹',
+                textEn: 'Let us step forward with reverence and gather sacred herbs for our path.',
+                textRegional: 'आओ श्रद्धा से आगे बढ़ें और वन के मार्ग पर पवित्र जड़ी-बूटियां एकत्र करें।',
+                isLeftAligned: false,
+              ),
+            ],
+            interactiveTargets: [
+              ComicCharacterTarget(
+                characterId: 'lakshmana',
+                name: 'Lakshmana',
+                emoji: '🛡️',
+                posX: 0.35,
+                posY: 0.55,
+                tapReactionType: 'boast_zoom',
+                soundEffect: 'victory_fanfare',
+                speechBubbleOnTap: 'Ever watchful, ever loyal! 🛡️',
               ),
             ],
           ),
@@ -123,6 +160,35 @@ class SampleStories {
                 tapReactionType: 'cheer_jump',
                 soundEffect: 'star_twinkle',
                 speechBubbleOnTap: 'Leap and glitter! ✨',
+              ),
+            ],
+          ),
+          ComicPanel(
+            panelId: 'rama_panel_2_chase_start',
+            backgroundTheme: 'race_track',
+            narrationEn:
+                'Entranced by its golden splendor, Sita pleaded for the wondrous deer. Rama drew his bow, promising to uncover the truth.',
+            narrationRegional:
+                'इस स्वर्ण मृग की सुंदरता से मुग्ध होकर सीता जी ने उसे लाने का आग्रह किया। श्री राम ने अपना धनुष उठाया और सत्य की खोज में निकल पड़े।',
+            dialogues: [
+              ComicDialogue(
+                speaker: 'Lord Rama',
+                avatar: '🏹',
+                textEn: 'Fear not. If it is divine, I will bring it gently. If it is demon illusion, dharma will strike it down.',
+                textRegional: 'भय मत करो। यदि यह निर्दोष है तो मैं इसे ले आऊंगा, यदि यह कोई माया है तो धर्म इसका नाश करेगा।',
+                isLeftAligned: true,
+              ),
+            ],
+            interactiveTargets: [
+              ComicCharacterTarget(
+                characterId: 'rama_chase',
+                name: 'Rama on Alert',
+                emoji: '🏹⭐',
+                posX: 0.40,
+                posY: 0.55,
+                tapReactionType: 'boast_zoom',
+                soundEffect: 'victory_fanfare',
+                speechBubbleOnTap: 'Truth will prevail! 🏹',
               ),
             ],
           ),
@@ -227,8 +293,9 @@ class SampleStories {
     estimatedMinutes: 6,
     targetAgeMin: 4,
     targetAgeMax: 10,
+    coverImage: 'assets/images/backgrounds_for_hare_tortoise_story/1.png',
     steps: [
-      // STEP 1: Comic Scene 1 - The Forest Boast & Challenge
+      // STEP 1: Comic Scene 1 - The Forest Boast & Challenge (2 Panels)
       ComicStep(
         id: 'ht_step_1_intro',
         title: 'The Forest Clearing Challenge',
@@ -267,9 +334,10 @@ class SampleStories {
                 characterId: 'hare',
                 name: 'Boastful Hare',
                 emoji: '🐰',
-                posX: 0.30,
-                posY: 0.52,
+                posX: 0.28,
+                posY: 0.68,
                 spriteAnimation: 'hare_idle',
+                flipX: true,
                 tapReactionType: 'boast_zoom',
                 soundEffect: 'victory_fanfare',
                 speechBubbleOnTap: 'I am the fastest animal in the woods! 🐰💨',
@@ -279,35 +347,15 @@ class SampleStories {
                 name: 'Timo Tortoise',
                 emoji: '🐢',
                 posX: 0.72,
-                posY: 0.55,
+                posY: 0.70,
                 spriteAnimation: 'tortoise_idle',
+                flipX: false,
                 tapReactionType: 'cheer_jump',
                 soundEffect: 'star_twinkle',
                 speechBubbleOnTap: 'Calm mind, steady footsteps. 🐢🌿',
               ),
             ],
           ),
-        ],
-      ),
-
-      // STEP 2: Mini-Game 1 - Forest Walk Warm-up
-      const MiniGameStep(
-        id: 'ht_step_2_forest_walk',
-        title: 'Mini-Game: Forest Warm-Up Trail',
-        gameType: MiniGameType.forestWalk,
-        instructionsEn:
-            'Guide Timo along the woodland trail! Collect clovers 🍀 and bright stars ⭐ while dodging muddy brambles to warm up for the big race!',
-        instructionsRegional:
-            'टीमो को जंगल के रास्ते पर आगे बढ़ाएं! स्वादिष्ट पत्तियां 🍀 और चमकीले सितारे ⭐ इकट्ठा करें और कीचड़ से बचें!',
-        targetScore: 50,
-        durationSeconds: 20,
-      ),
-
-      // STEP 3: Comic Scene 2 - The Race Begins!
-      ComicStep(
-        id: 'ht_step_3_race_start',
-        title: 'The Starting Line',
-        panels: [
           ComicPanel(
             panelId: 'ht_panel_2',
             backgroundTheme: 'race_track',
@@ -335,23 +383,25 @@ class SampleStories {
             ],
             interactiveTargets: [
               ComicCharacterTarget(
-                characterId: 'hare',
+                characterId: 'hare_run',
                 name: 'Sprinting Hare',
                 emoji: '🐰💨',
-                posX: 0.32,
-                posY: 0.50,
+                posX: 0.62,
+                posY: 0.68,
                 spriteAnimation: 'hare_run',
+                flipX: true,
                 tapReactionType: 'boast_zoom',
                 soundEffect: 'victory_fanfare',
                 speechBubbleOnTap: 'Zoom! Catch my dust! 💨',
               ),
               ComicCharacterTarget(
-                characterId: 'tortoise',
+                characterId: 'tortoise_walk',
                 name: 'Timo Tortoise',
                 emoji: '🐢',
-                posX: 0.68,
-                posY: 0.54,
+                posX: 0.22,
+                posY: 0.70,
                 spriteAnimation: 'tortoise_walk',
+                flipX: true,
                 tapReactionType: 'cheer_jump',
                 soundEffect: 'footstep_wood',
                 speechBubbleOnTap: 'Step by step, straight ahead! 🐾',
@@ -361,23 +411,23 @@ class SampleStories {
         ],
       ),
 
-      // STEP 4: Mini-Game 2 - Steady Pace Racing
+      // STEP 2: Mini-Game 1 - Forest Walk Warm-up
       const MiniGameStep(
-        id: 'ht_step_4_steady_race',
-        title: 'Mini-Game: Steady Pace Challenge',
-        gameType: MiniGameType.raceBegins,
+        id: 'ht_step_2_forest_walk',
+        title: 'Mini-Game: Forest Warm-Up Trail',
+        gameType: MiniGameType.forestWalk,
         instructionsEn:
-            'Tap steadily to keep Timo in the green STEADY zone! Maintain balanced focus while the hare zooms ahead!',
+            'Guide Timo along the woodland trail! Collect clovers 🍀 and bright stars ⭐ while dodging muddy brambles to warm up for the big race!',
         instructionsRegional:
-            'टीमो को हरी पट्टी में संतुलित रखने के लिए स्थिर गति से टैप करें! जब खरगोश आगे भागे, तब अपना ध्यान स्थिर रखें!',
-        targetScore: 60,
+            'टीमो को जंगल के रास्ते पर आगे बढ़ाएं! स्वादिष्ट पत्तियां 🍀 और चमकीले सितारे ⭐ इकट्ठा करें और कीचड़ से बचें!',
+        targetScore: 50,
         durationSeconds: 20,
       ),
 
-      // STEP 5: Comic Scene 3 - The Overconfident Nap
+      // STEP 3: Comic Scene 2 - The Overconfident Nap & Frantic Awakening (2 Panels)
       ComicStep(
-        id: 'ht_step_5_shady_nap',
-        title: 'The Shady Tree Overlook',
+        id: 'ht_step_3_mid_race',
+        title: 'The Twist in the Race',
         panels: [
           ComicPanel(
             panelId: 'ht_panel_3',
@@ -410,46 +460,27 @@ class SampleStories {
                 name: 'Sleeping Hare',
                 emoji: '🐰💤',
                 posX: 0.28,
-                posY: 0.54,
+                posY: 0.76,
                 spriteAnimation: 'hare_sleep',
+                flipX: true,
                 tapReactionType: 'boast_zoom',
                 soundEffect: 'star_twinkle',
-                speechBubbleOnTap: 'Zzz... snoring away peacefully... 😴',
+                speechBubbleOnTap: 'Zzz... snoring away peacefully on the grass... 😴',
               ),
               ComicCharacterTarget(
-                characterId: 'tortoise',
+                characterId: 'tortoise_climb',
                 name: 'Determined Timo',
                 emoji: '🐢✨',
                 posX: 0.72,
-                posY: 0.52,
+                posY: 0.70,
                 spriteAnimation: 'tortoise_climb',
+                flipX: true,
                 tapReactionType: 'cheer_jump',
                 soundEffect: 'footstep_wood',
                 speechBubbleOnTap: 'Never give up! Onward to the hill! 🐢🏔️',
               ),
             ],
           ),
-        ],
-      ),
-
-      // STEP 6: Mini-Game 3 - Rhythm March
-      const MiniGameStep(
-        id: 'ht_step_6_rhythm_steps',
-        title: 'Mini-Game: Steady March Rhythm',
-        gameType: MiniGameType.rhythmSteps,
-        instructionsEn:
-            'While the hare snores, keep Timo’s steady marching cadence! Tap the falling left and right footsteps right as they hit the green target line!',
-        instructionsRegional:
-            'जब तक खरगोश सो रहा है, कछुए के कदमों की ताल बनाए रखें! बीट लाइन पर आते ही बाएँ और दाएँ कदमों पर सटीक टैप करें!',
-        targetScore: 60,
-        durationSeconds: 20,
-      ),
-
-      // STEP 7: Comic Scene 4 - The Frantic Awakening
-      ComicStep(
-        id: 'ht_step_7_awakening',
-        title: 'The Sunset Awakening',
-        panels: [
           ComicPanel(
             panelId: 'ht_panel_4',
             backgroundTheme: 'finish_line',
@@ -480,20 +511,22 @@ class SampleStories {
                 characterId: 'surprised_hare',
                 name: 'Shocked Hare',
                 emoji: '🐰❗',
-                posX: 0.28,
-                posY: 0.48,
+                posX: 0.25,
+                posY: 0.70,
                 spriteAnimation: 'hare_surprised',
+                flipX: true,
                 tapReactionType: 'boast_zoom',
                 soundEffect: 'victory_fanfare',
                 speechBubbleOnTap: 'Oh no! The finish ribbon is right there! 😱',
               ),
               ComicCharacterTarget(
-                characterId: 'tortoise',
+                characterId: 'tortoise_sprint',
                 name: 'Sprinting Timo',
                 emoji: '🐢💨',
-                posX: 0.70,
-                posY: 0.52,
+                posX: 0.75,
+                posY: 0.70,
                 spriteAnimation: 'tortoise_run',
+                flipX: true,
                 tapReactionType: 'cheer_jump',
                 soundEffect: 'footstep_wood',
                 speechBubbleOnTap: 'Victory is in reach! 🏁✨',
@@ -503,9 +536,9 @@ class SampleStories {
         ],
       ),
 
-      // STEP 8: Mini-Game 4 - Final Sprint
+      // STEP 4: Mini-Game 2 - Final Sprint
       const MiniGameStep(
-        id: 'ht_step_8_final_sprint',
+        id: 'ht_step_4_final_sprint',
         title: 'Mini-Game: Final Sprint to the Ribbon!',
         gameType: MiniGameType.finalSprint,
         instructionsEn:
@@ -516,71 +549,9 @@ class SampleStories {
         durationSeconds: 20,
       ),
 
-      // STEP 9: Comic Scene 5 - Victory & The Timeless Moral
-      ComicStep(
-        id: 'ht_step_9_moral',
-        title: 'Slow and Steady Wins the Race',
-        panels: [
-          ComicPanel(
-            panelId: 'ht_panel_5',
-            backgroundTheme: 'finish_line',
-            backgroundImage:
-                'assets/images/backgrounds_for_hare_tortoise_story/5.png',
-            narrationEn:
-                'The tortoise had already crossed the finish line, and all the animals were cheering! The red victory ribbon fluttered proudly in the breeze.\n\nThe hare realized that his overconfidence had cost him the race. He congratulated the tortoise and learned an important lesson.\n\n⭐ Moral: Slow and steady wins the race. Hard work, perseverance, and consistency are more valuable than overconfidence.',
-            narrationRegional:
-                'कछुआ पहले ही विजय-रेखा पार कर चुका था, और पूरा जंगल तालियों की गड़गड़ाहट से गूंज उठा! लाल विजय-फीता गर्व से लहरा रहा था।\n\nखरगोश समझ गया कि उसके अहंकार और अति-आत्मविश्वास ने उसे हरा दिया। उसने सिर झुकाकर कछुए को बधाई दी और जीवन का सबसे अनमोल सबक सीखा।\n\n⭐ नैतिक शिक्षा: धीमी और स्थिर गति ही दौड़ जीतती है। कठिन परिश्रम, धैर्य और निरंतरता अति-आत्मविश्वास से कहीं अधिक श्रेष्ठ हैं।',
-            dialogues: [
-              ComicDialogue(
-                speaker: 'Timo Tortoise',
-                avatar: '🐢',
-                textEn:
-                    'Thank you, dear forest friends! Consistency and perseverance made this victory possible! 🏆🎉',
-                textRegional:
-                    'धन्यवाद प्यारे मित्रों! कभी न रुकने के संकल्प और धैर्य ने ही आज मुझे विजयी बनाया है! 🏆🎉',
-                isLeftAligned: true,
-              ),
-              ComicDialogue(
-                speaker: 'Humbled Hare',
-                avatar: '🐰',
-                textEn:
-                    'You taught me a great truth today, Timo. I will never boast or mock anyone again. Congratulations! 🤝',
-                textRegional:
-                    'तुमने मुझे आज जीवन का सबसे बड़ा सच सिखाया, टीमो। मैं अब कभी घमंड नहीं करूँगा। तुम्हें बधाई! 🤝',
-                isLeftAligned: false,
-              ),
-            ],
-            interactiveTargets: [
-              ComicCharacterTarget(
-                characterId: 'champion_tortoise',
-                name: 'Champion Timo',
-                emoji: '🐢🏆',
-                posX: 0.35,
-                posY: 0.52,
-                spriteAnimation: 'tortoise_win',
-                tapReactionType: 'cheer_jump',
-                soundEffect: 'victory_fanfare',
-                speechBubbleOnTap: 'Slow and steady won the race! 🏆✨',
-              ),
-              ComicCharacterTarget(
-                characterId: 'cheering_hare',
-                name: 'Humbled Hare',
-                emoji: '🐰🤝',
-                posX: 0.70,
-                posY: 0.52,
-                spriteAnimation: 'hare_cheer',
-                tapReactionType: 'boast_zoom',
-                soundEffect: 'star_twinkle',
-                speechBubbleOnTap: 'Congratulations Timo! Great job! 👏',
-              ),
-            ],
-          ),
-        ],
-      ),
-
-      // STEP 10: Comprehension Quiz
+      // STEP 5: Comprehension Quiz
       const QuizStep(
-        id: 'ht_step_10_quiz',
+        id: 'ht_step_5_quiz',
         title: 'The Hare & Tortoise Wisdom Quiz',
         questions: [
           QuizQuestion(
@@ -652,9 +623,9 @@ class SampleStories {
         ],
       ),
 
-      // STEP 11: Reward Screen
+      // STEP 6: Reward Screen
       const RewardStep(
-        id: 'ht_step_11_reward',
+        id: 'ht_step_6_reward',
         title: 'Forest Champion!',
         badgeName: 'Emerald Green Badge',
         badgeIcon: '🐢🏆✨',
@@ -683,14 +654,200 @@ class SampleStories {
     estimatedMinutes: 5,
     targetAgeMin: 4,
     targetAgeMax: 10,
+    coverImage: 'assets/images/story_panchatantra.jpg',
     steps: [
+      // STEP 1: Comic Intro - The Sweet Jamun Tree
+      ComicStep(
+        id: 'pancha_step_1_intro',
+        title: 'The Sweet Jamun Tree',
+        panels: [
+          ComicPanel(
+            panelId: 'pancha_panel_1',
+            backgroundTheme: 'sunny_forest',
+            backgroundImage: 'assets/images/backgrounds_for_hare_tortoise_story/1.png',
+            narrationEn:
+                'High upon a lush rose-apple tree by the sacred river Ganga lived Kapi, a clever and generous monkey.',
+            narrationRegional:
+                'पवित्र गंगा नदी के तट पर लगे विशाल जामुन के वृक्ष पर कपी नाम का एक बुद्धिमान और दयालु बंदर रहता था।',
+            dialogues: [
+              ComicDialogue(
+                speaker: 'Kapi (Monkey)',
+                avatar: '🐒',
+                textEn: 'Welcome, Makara! Feast on these ruby-red sweet jamun fruits fresh from my tree!',
+                textRegional: 'स्वागत है मकर! इन मीठे और रसीले जामुन का आनंद लो जो मैंने तुम्हारे लिए तोड़े हैं!',
+                isLeftAligned: true,
+              ),
+              ComicDialogue(
+                speaker: 'Makara (Crocodile)',
+                avatar: '🐊',
+                textEn: 'Thank you, kind brother! You are the most generous friend in the whole forest.',
+                textRegional: 'धन्यवाद भ्राता! तुम इस वन के सबसे उदार और सच्चे मित्र हो।',
+                isLeftAligned: false,
+              ),
+            ],
+            interactiveTargets: [
+              ComicCharacterTarget(
+                characterId: 'kapi_monkey',
+                name: 'Kapi',
+                emoji: '🐒',
+                posX: 0.32,
+                posY: 0.50,
+                tapReactionType: 'boast_zoom',
+                soundEffect: 'tap_pop',
+                speechBubbleOnTap: 'Sweet fruits make true friends! 🍃',
+              ),
+              ComicCharacterTarget(
+                characterId: 'makara_croc',
+                name: 'Makara',
+                emoji: '🐊',
+                posX: 0.68,
+                posY: 0.62,
+                tapReactionType: 'nod_agree',
+                soundEffect: 'tortoise_step',
+                speechBubbleOnTap: 'Mmm, delicious jamuns! 🌊',
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      // STEP 2: Mini-Game 1 - Gathering the Forest Harvest
+      const MiniGameStep(
+        id: 'pancha_step_2_game',
+        title: 'Jamun Harvest Trail',
+        gameType: MiniGameType.forestWalk,
+        instructionsEn:
+            'Slide Kapi left and right to harvest sweet jamuns and golden stars while dodging thorns and river mud!',
+        instructionsRegional:
+            'मीठे जामुन और सुनहरे तारे एकत्र करने के लिए बाएं और दाएं स्लाइड करें!',
+        targetScore: 100,
+        durationSeconds: 30,
+      ),
+
+      // STEP 3: Comic Scene 2 - The River Treachery & Quick Wit
+      ComicStep(
+        id: 'pancha_step_3_comic',
+        title: 'The Clever Heart Trick',
+        panels: [
+          ComicPanel(
+            panelId: 'pancha_panel_2',
+            backgroundTheme: 'race_track',
+            backgroundImage: 'assets/images/backgrounds_for_hare_tortoise_story/3.png',
+            narrationEn:
+                'Midway across the river, Makara confessed his secret: his wife demanded the monkey’s heart! But Kapi did not panic.',
+            narrationRegional:
+                'नदी के बीचों-बीच पहुंचकर मगरमच्छ ने सच बताया कि उसकी पत्नी बंदर का दिल खाना चाहती है! लेकिन कपी तनिक भी घबराया नहीं।',
+            dialogues: [
+              ComicDialogue(
+                speaker: 'Makara',
+                avatar: '🐊',
+                textEn: 'Alas friend, my wife says the heart of one who eats such sweet fruit must be sweet as nectar!',
+                textRegional: 'मित्र क्षमा करना, मेरी पत्नी का मानना है कि मीठे फल खाने वाले का दिल भी अमृत समान होगा!',
+                isLeftAligned: false,
+              ),
+              ComicDialogue(
+                speaker: 'Kapi',
+                avatar: '🐒',
+                textEn: 'Oh brother, why didn’t you tell me? I keep my heart safely stored in the hollow of the jamun tree! Turn back so I can fetch it!',
+                textRegional: 'अरे भ्राता, पहले क्यों नहीं बताया? मैं अपना दिल जामुन के खोखल में सुरक्षित रखता हूँ! मुझे वापस ले चलो!',
+                isLeftAligned: true,
+              ),
+            ],
+            interactiveTargets: [
+              ComicCharacterTarget(
+                characterId: 'kapi_quick_wit',
+                name: 'Clever Kapi',
+                emoji: '🐒',
+                posX: 0.35,
+                posY: 0.52,
+                tapReactionType: 'boast_zoom',
+                soundEffect: 'quiz_correct',
+                speechBubbleOnTap: 'Presence of mind conquers danger! 💡',
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      // STEP 4: Mini-Game 2 - River Animal Memory Match
+      const MiniGameStep(
+        id: 'pancha_step_4_game',
+        title: 'River Creatures Memory Match',
+        gameType: MiniGameType.memoryMatch,
+        instructionsEn:
+            'Flip cards and match pairs of sacred river creatures to help Kapi leap safely back onto the high branch!',
+        instructionsRegional:
+            'कपी को सुरक्षित किनारे तक पहुँचाने के लिए पवित्र नदी के जीवों के जोड़े खोजें!',
+        targetScore: 120,
+        durationSeconds: 45,
+      ),
+
+      // STEP 5: Educational Quiz
+      const QuizStep(
+        id: 'pancha_step_5_quiz',
+        title: 'Panchatantra Wisdom Quiz',
+        questions: [
+          QuizQuestion(
+            id: 'pq_1',
+            questionEn: 'Where did Kapi the clever monkey claim his heart was kept?',
+            questionRegional: 'चतुर बंदर कपी ने अपना दिल कहाँ सुरक्षित रखने की बात कही?',
+            optionsEn: [
+              'Safely in the hollow of the jamun tree',
+              'Deep beneath the river sands',
+              'Inside a golden chest',
+              'Carried by the forest owl',
+            ],
+            optionsRegional: [
+              'जामुन के पेड़ के सुरक्षित खोखल में',
+              'नदी की गहरी रेत के नीचे',
+              'एक सुनहरे संदूक के भीतर',
+              'जंगल के उल्लू के पास',
+            ],
+            correctOptionIndex: 0,
+            explanationEn: 'Kapi used his quick wit to convince the crocodile to swim back to the tree!',
+            explanationRegional: 'कपी ने अपनी तीव्र बुद्धि से मगरमच्छ को वापस पेड़ की ओर ले जाने पर मना लिया!',
+          ),
+          QuizQuestion(
+            id: 'pq_2',
+            questionEn: 'What is the timeless moral of this Panchatantra fable?',
+            questionRegional: 'पंचतंत्र की इस प्रसिद्ध कथा से हमें क्या मुख्य शिक्षा मिलती है?',
+            optionsEn: [
+              'Presence of mind and wisdom overcome grave danger',
+              'Crocodiles can never swim in sweet rivers',
+              'Never share fruits with anyone',
+              'Trees should always grow far from rivers',
+            ],
+            optionsRegional: [
+              'संकट के समय धैर्य और प्रत्युत्पन्नमति से प्राणों की रक्षा होती है',
+              'मगरमच्छ कभी मीठी नदियों में नहीं तैर सकते',
+              'अपने फल कभी किसी से साझा न करें',
+              'पेड़ों को हमेशा नदी से बहुत दूर होना चाहिए',
+            ],
+            correctOptionIndex: 0,
+            explanationEn: 'When facing unexpected peril, calm intelligence and quick thinking prevail over brute strength.',
+            explanationRegional: 'अचानक आए संकट में घबराने के बजाय शांत बुद्धि और चतुराई से हर समस्या का समाधान संभव है।',
+          ),
+          QuizQuestion(
+            id: 'pq_3',
+            questionEn: 'Which Sanskrit word signifies monkey in Indian mythology?',
+            questionRegional: 'भारतीय पौराणिक ग्रंथों में बंदर के लिए कौन सा संस्कृत शब्द प्रयुक्त होता है?',
+            optionsEn: ['वानर (Vanar)', 'गज (Gaj)', 'मयूर (Mayur)', 'अश्व (Ashwa)'],
+            optionsRegional: ['वानर (Vanar)', 'गज (Gaj)', 'मयूर (Mayur)', 'अश्व (Ashwa)'],
+            correctOptionIndex: 0,
+            explanationEn: 'Vanara is the revered monkey hero archetype celebrated throughout the Ramayana and Panchatantra.',
+            explanationRegional: 'वानर शब्द रामायण और पंचतंत्र में आदरणीय वानर वीरों के लिए प्रयुक्त होता है।',
+          ),
+        ],
+      ),
+
+      // STEP 6: Victory Reward Celebration
       const RewardStep(
-        id: 'pancha_step',
-        title: 'The Wise Monkey',
+        id: 'pancha_step_6_reward',
+        title: 'The Clever Heart Victory',
         badgeName: 'Emerald Green',
         badgeIcon: '🐒🍃',
-        badgeDescriptionEn: 'The monkey outsmarted the crocodile with quick wit!',
-        badgeDescriptionRegional: 'चतुर बंदर ने अपनी बुद्धि से मगरमच्छ को परास्त किया!',
+        badgeDescriptionEn: 'Kapi outsmarted danger with wisdom and presence of mind!',
+        badgeDescriptionRegional: 'कपी ने संकट में अपनी अद्भुत चतुराई और सूझबूझ से विजय पाई!',
         baseStars: 3,
       ),
     ],
@@ -712,6 +869,7 @@ class SampleStories {
     estimatedMinutes: 5,
     targetAgeMin: 6,
     targetAgeMax: 12,
+    coverImage: 'assets/images/story_vikram_betaal.jpg',
     steps: [
       const RewardStep(
         id: 'vikram_step',

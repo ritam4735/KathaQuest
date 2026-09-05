@@ -73,12 +73,37 @@ class SaveManager {
         _cachedProfile.claimedAchievementIds = [];
         _cachedProfile.screenTimeLimitMinutes = 30;
       }
+      // Migration from v3 → v4: add mini-game high scores, stars, and collectibles
+      if (version < 4) {
+        _cachedProfile.miniGameHighScores = {};
+        _cachedProfile.miniGameStars = {};
+        _cachedProfile.miniGameCompleted = {};
+        _cachedProfile.totalMiniGamePoints = 0;
+        _cachedProfile.unlockedCollectibles = ['golden_star', 'emerald_clover'];
+      }
       _cachedProfile.saveVersion = UserProfile.currentSaveVersion;
       _writeToPrefs(prefs);
       if (kDebugMode) {
         print('SaveManager: Migrated save data from v$version to v${UserProfile.currentSaveVersion}');
       }
     }
+  }
+
+  /// Record mini-game result persistently.
+  Future<bool> recordMiniGameScore({
+    required String gameId,
+    required int score,
+    required int stars,
+    int coinsReward = 0,
+  }) async {
+    final isNewHighScore = _cachedProfile.recordMiniGameResult(
+      gameId: gameId,
+      score: score,
+      stars: stars,
+      coinsReward: coinsReward,
+    );
+    await saveProfile(_cachedProfile);
+    return isNewHighScore;
   }
 
   /// Save profile with debouncing — batches rapid calls within 500ms.

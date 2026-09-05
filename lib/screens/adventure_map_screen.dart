@@ -384,33 +384,42 @@ class _AdventureMapScreenState extends State<AdventureMapScreen>
                                     const SizedBox(height: 8),
                                     Row(
                                       children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.asset(
-                                            'assets/images/backgrounds_for_hare_tortoise_story/1.png',
-                                            width: 50,
-                                            height: 54,
-                                            fit: BoxFit.cover,
+                                        Expanded(
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: AspectRatio(
+                                              aspectRatio: 1.0,
+                                              child: Image.asset(
+                                                'assets/images/backgrounds_for_hare_tortoise_story/1.png',
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.asset(
-                                            'assets/images/story_panchatantra.jpg',
-                                            width: 50,
-                                            height: 54,
-                                            fit: BoxFit.cover,
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: AspectRatio(
+                                              aspectRatio: 1.0,
+                                              child: Image.asset(
+                                                'assets/images/story_panchatantra.jpg',
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.asset(
-                                            'assets/images/story_vikram_betaal.jpg',
-                                            width: 50,
-                                            height: 54,
-                                            fit: BoxFit.cover,
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: AspectRatio(
+                                              aspectRatio: 1.0,
+                                              child: Image.asset(
+                                                'assets/images/story_vikram_betaal.jpg',
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ],

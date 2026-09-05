@@ -9,6 +9,7 @@ import '../features/minigames/mg1_forest_walk.dart';
 import '../features/minigames/mg2_race_begins.dart';
 import '../features/minigames/mg3_rhythm_steps.dart';
 import '../features/minigames/mg4_final_sprint.dart';
+import '../features/minigames/mg5_memory_match.dart';
 import '../features/quiz/quiz_view.dart';
 import 'reward_screen.dart';
 
@@ -77,6 +78,8 @@ class StoryScreen extends StatelessWidget {
       case StoryStepType.comic:
         stepWidget = ComicReaderView(
           step: currentStep as ComicStep,
+          initialPanelIndex: gameState.currentPanelIndex,
+          onPanelChanged: (panelIndex) => gameState.setPanelIndex(panelIndex),
           onContinue: () => gameState.nextStep(),
         );
         break;
@@ -112,6 +115,13 @@ class StoryScreen extends StatelessWidget {
               onPause: () => _showPauseDialog(context, gameState),
             );
             break;
+          case MiniGameType.memoryMatch:
+            stepWidget = MemoryMatchMiniGame(
+              step: miniGameStep,
+              onComplete: (score) => gameState.completeMiniGame(score),
+              onPause: () => _showPauseDialog(context, gameState),
+            );
+            break;
         }
         break;
 
@@ -135,7 +145,7 @@ class StoryScreen extends StatelessWidget {
 
         stepWidget = RewardScreen(
           step: rewardStep,
-          onReplay: () => gameState.startStory(currentStory),
+          onReplay: () => gameState.startStory(currentStory, resume: false),
           onReturnToLibrary: () {
             gameState.exitStoryToLibrary();
             Navigator.of(context).pop();

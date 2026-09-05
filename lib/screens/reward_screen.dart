@@ -6,7 +6,6 @@ import '../core/haptic_feedback_helper.dart';
 import '../core/models/story_model.dart';
 import '../state/game_state.dart';
 import '../widgets/confetti_overlay.dart';
-import '../widgets/star_rating_bar.dart';
 
 class RewardScreen extends StatefulWidget {
   final RewardStep step;

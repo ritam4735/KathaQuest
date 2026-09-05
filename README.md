@@ -2,12 +2,6 @@
 
 <div align="center">
 
-![Smart India Hackathon](https://img.shields.io/badge/SIH-Finalist%20Project-FF9933?style=for-the-badge&logo=target&logoColor=white)
-![Flutter](https://img.shields.io/badge/Flutter-3.10+-02569B?style=for-the-badge&logo=flutter&logoColor=white)
-![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?style=for-the-badge&logo=dart&logoColor=white)
-![Platform](https://img.shields.io/badge/Platform-Web%20%7C%20Android%20%7C%20iOS%20%7C%20Desktop-4CAF50?style=for-the-badge)
-![Offline First](https://img.shields.io/badge/Storage-100%25%20Offline%20First-blueviolet?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge)
 
 ### **Transforming Traditional Indian Moral Stories into Interactive Digital Adventures**
 *A gamified, bilingual storytelling & experiential learning ecosystem for young minds (Ages 4–9).*
